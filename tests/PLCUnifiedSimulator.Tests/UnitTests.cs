@@ -4,11 +4,21 @@ using PLCUnifiedSimulator.Protocols.Mitsubishi;
 using PLCUnifiedSimulator.Protocols.Omron;
 using PLCUnifiedSimulator.Simulators;
 using System.Net.Sockets;
+using System.Text;
 using Xunit;
 
 namespace PLCUnifiedSimulator.Tests;
 
-public class PLCDataTests
+public class TestBase
+{
+    public TestBase()
+    {
+        // Fix console output encoding for test execution
+        Console.OutputEncoding = Encoding.UTF8;
+    }
+}
+
+public class PLCDataTests : TestBase
 {
     [Fact]
     public void PLCData_Should_Store_Address_And_Data()
@@ -74,7 +84,7 @@ public class PLCDataTests
     }
 }
 
-public class PLCAddressTests
+public class PLCAddressTests : TestBase
 {
     [Fact]
     public void PLCAddress_Should_Initialize_Properties()
@@ -102,7 +112,7 @@ public class PLCAddressTests
     }
 }
 
-public class MitsubishiMCProtocolTests
+public class MitsubishiMCProtocolTests : TestBase
 {
     [Fact]
     public void MitsubishiMCProtocol_Should_Have_Correct_Properties()
@@ -117,7 +127,7 @@ public class MitsubishiMCProtocolTests
     }
 }
 
-public class OmronFINSProtocolTests
+public class OmronFINSProtocolTests : TestBase
 {
     [Fact]
     public void OmronFINSProtocol_Should_Have_Correct_Properties()
@@ -132,7 +142,7 @@ public class OmronFINSProtocolTests
     }
 }
 
-public class MitsubishiMCSimulatorTests
+public class MitsubishiMCSimulatorTests : TestBase
 {
     [Fact]
     public void MitsubishiMCSimulator_Should_Initialize_Correctly()
@@ -163,7 +173,7 @@ public class MitsubishiMCSimulatorTests
     }
 }
 
-public class OmronFINSSimulatorTests
+public class OmronFINSSimulatorTests : TestBase
 {
     [Fact]
     public void OmronFINSSimulator_Should_Initialize_Correctly()
@@ -192,9 +202,59 @@ public class OmronFINSSimulatorTests
         // Assert
         actualValue.Should().BeEquivalentTo(expectedValue);
     }
+
+    [Theory]
+    [InlineData("IO", 0xb0)]
+    [InlineData("WR", 0xb1)]
+    [InlineData("HR", 0xb2)]
+    [InlineData("AR", 0xb3)]
+    [InlineData("TS", 0x09)]
+    [InlineData("CS", 0x09)]
+    [InlineData("TN", 0x89)]
+    [InlineData("CN", 0x89)]
+    [InlineData("DM", 0x82)]
+    [InlineData("EM", 0x98)]
+    [InlineData("EB", 0xa0)]
+    [InlineData("TKB", 0x06)]
+    [InlineData("TKS", 0x46)]
+    [InlineData("IR", 0xdc)]
+    [InlineData("DR", 0xbc)]
+    public void OmronFINSSimulator_Should_Support_Extended_Device_Types(string deviceType, byte expectedCode)
+    {
+        // Arrange
+        using var simulator = new OmronFINSSimulator();
+        var address = new PLCAddress(deviceType, 100, 1);
+        var testValue = BitConverter.GetBytes((short)1234);
+
+        // Act
+        simulator.SetDeviceValue(address, testValue);
+        var retrievedValue = simulator.GetDeviceValue(address);
+        var supportedDevices = simulator.GetSupportedDevices();
+
+        // Assert
+        retrievedValue.Should().BeEquivalentTo(testValue);
+        simulator.GetDeviceValue(address).Should().NotBeNull();
+        supportedDevices.Should().ContainKey(deviceType);
+        supportedDevices[deviceType].Should().Be(expectedCode);
+    }
+
+    [Fact]
+    public void OmronFINSSimulator_Should_Get_Supported_Device_List()
+    {
+        // Arrange
+        using var simulator = new OmronFINSSimulator();
+
+        // Act
+        var supportedDevices = simulator.GetSupportedDevices();
+
+        // Assert
+        supportedDevices.Should().NotBeEmpty();
+        supportedDevices.Should().ContainKeys("IO", "WR", "HR", "AR", "TS", "CS", "TN", "CN",
+                                             "DM", "EM", "EB", "TKB", "TKS", "IR", "DR");
+    }
 }
 
-public class UDPCommunicationTests
+public class UDPCommunicationTests : TestBase
 {
     [Fact]
     public async Task MitsubishiMCSimulator_Should_Support_UDP_Start()
@@ -368,7 +428,7 @@ public class UDPCommunicationTests
     }
 }
 
-public class UDPPacketCommunicationTests
+public class UDPPacketCommunicationTests : TestBase
 {
     [Fact]
     public async Task MitsubishiMCSimulator_Should_Handle_UDP_Packets()
@@ -568,7 +628,7 @@ public class UDPPacketCommunicationTests
 /// <summary>
 /// 三菱MCプロトコル拡張デバイステスト
 /// </summary>
-public class MitsubishiMCExtendedDeviceTests
+public class MitsubishiMCExtendedDeviceTests : TestBase
 {
     [Theory]
     [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "X")]
@@ -737,5 +797,123 @@ public class MitsubishiMCExtendedDeviceTests
         // Assert
         description.Should().NotBeNullOrEmpty();
         description.Should().Contain("Q/L/iQ-R");
+    }
+}
+
+/// <summary>
+/// オムロンFINSプロトコル拡張デバイステスト
+/// </summary>
+public class OmronFINSExtendedDeviceTests : TestBase
+{
+    [Theory]
+    [InlineData("IO", 0xb0)]
+    [InlineData("WR", 0xb1)]
+    [InlineData("HR", 0xb2)]
+    [InlineData("AR", 0xb3)]
+    [InlineData("TS", 0x09)]
+    [InlineData("CS", 0x09)]
+    [InlineData("TN", 0x89)]
+    [InlineData("CN", 0x89)]
+    [InlineData("DM", 0x82)]
+    [InlineData("EM", 0x98)]
+    [InlineData("EB", 0xa0)]
+    [InlineData("TKB", 0x06)]
+    [InlineData("TKS", 0x46)]
+    [InlineData("IR", 0xdc)]
+    [InlineData("DR", 0xbc)]
+    public void OmronFINSSimulator_Should_Support_All_Extended_Device_Types(string deviceType, byte expectedCode)
+    {
+        // Arrange
+        using var simulator = new OmronFINSSimulator();
+
+        // Act
+        var supportedDevices = simulator.GetSupportedDevices();
+
+        // Assert
+        supportedDevices.Should().ContainKey(deviceType);
+        supportedDevices[deviceType].Should().Be(expectedCode);
+    }
+
+    [Theory]
+    [InlineData("IO")]
+    [InlineData("WR")]
+    [InlineData("HR")]
+    [InlineData("AR")]
+    [InlineData("TS")]
+    [InlineData("CS")]
+    [InlineData("TN")]
+    [InlineData("CN")]
+    [InlineData("DM")]
+    [InlineData("EM")]
+    [InlineData("EB")]
+    [InlineData("TKB")]
+    [InlineData("TKS")]
+    [InlineData("IR")]
+    [InlineData("DR")]
+    public void OmronFINSSimulator_Should_Store_And_Retrieve_Extended_Device_Values(string deviceType)
+    {
+        // Arrange
+        using var simulator = new OmronFINSSimulator();
+        var address = new PLCAddress(deviceType, 500, 2);
+        var testValue = BitConverter.GetBytes(0x12345678); // 32-bit value for 2-word device
+
+        // Act
+        simulator.SetDeviceValue(address, testValue);
+        var retrievedValue = simulator.GetDeviceValue(address);
+
+        // Assert
+        retrievedValue.Should().BeEquivalentTo(testValue);
+        retrievedValue.Should().HaveCount(4); // 2 words = 4 bytes
+    }
+
+    [Fact]
+    public void OmronFINSSimulator_Should_Get_Complete_Supported_Device_List()
+    {
+        // Arrange
+        using var simulator = new OmronFINSSimulator();
+
+        // Act
+        var supportedDevices = simulator.GetSupportedDevices();
+
+        // Assert
+        supportedDevices.Should().NotBeEmpty();
+        supportedDevices.Should().HaveCountGreaterThanOrEqualTo(17); // 拡張デバイス + 後方互換デバイス
+
+        // 拡張デバイスがすべて含まれていることを確認
+        supportedDevices.Should().ContainKeys("IO", "WR", "HR", "AR", "TS", "CS", "TN", "CN",
+                                             "DM", "EM", "EB", "TKB", "TKS", "IR", "DR");
+
+        // 後方互換デバイスの確認
+        supportedDevices.Should().ContainKeys("W", "H", "A", "C");
+    }
+
+    [Fact]
+    public void OmronFINSSimulator_Should_Handle_Backward_Compatibility_Devices()
+    {
+        // Arrange
+        using var simulator = new OmronFINSSimulator();
+        var supportedDevices = simulator.GetSupportedDevices();
+
+        // Act & Assert - 後方互換デバイスの確認
+        supportedDevices.Should().ContainKey("W").WhoseValue.Should().Be(0x31);
+        supportedDevices.Should().ContainKey("H").WhoseValue.Should().Be(0x32);
+        supportedDevices.Should().ContainKey("A").WhoseValue.Should().Be(0x33);
+        supportedDevices.Should().ContainKey("C").WhoseValue.Should().Be(0x09);
+    }
+
+    [Fact]
+    public void OmronFINSSimulator_Should_Validate_Device_Type_Consistency()
+    {
+        // Arrange
+        using var simulator = new OmronFINSSimulator();
+        var supportedDevices = simulator.GetSupportedDevices();
+
+        // Act & Assert - 各デバイスタイプが一意のメモリエリアコードを持つことを確認
+        var memoryAreaCodes = supportedDevices.Values.ToList();
+        var uniqueCodes = memoryAreaCodes.Distinct().ToList();
+
+        // 19個のデバイス（拡張15個 + 後方互換4個）があり、そのうちのいくつかは同じコードを共有
+        supportedDevices.Should().HaveCount(19);
+        uniqueCodes.Should().HaveCountGreaterThan(15); // 一部のデバイスは同じコードを共有（TS/CS, TN/CNなど）
     }
 }

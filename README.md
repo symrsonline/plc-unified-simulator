@@ -246,14 +246,75 @@ catch (NotSupportedException ex)
 }
 ```
 
-### オムロンFINSプロトコル
-- **D**: DM領域
-- **C**: CIO領域
-- **W**: WR領域
-- **H**: HR領域
-- **A**: AR領域
-- **T**: タイマ
-- **CT**: カウンタ
+### オムロンFINSプロトコル（19デバイス対応）
+
+#### 📟 リレーデバイス（ビット型）
+| デバイス | 名称 | メモリ領域コード | 説明 |
+|----------|------|----------------|------|
+| **IO** | 入出力リレー | 0xB0 | チャネルI/O入出力リレー |
+| **WR** | 内部補助リレー | 0xB1 | 内部制御用補助リレー |
+| **HR** | 保持リレー | 0xB2 | 電源断でも保持されるリレー |
+| **AR** | 補助記憶リレー | 0xB3 | 補助記憶用リレー |
+
+#### ⏱️ タイマ・カウンタ関連
+| デバイス | 名称 | メモリ領域コード | 説明 |
+|----------|------|----------------|------|
+| **TS** | タイマアップフラグ | 0x09 | タイマ動作完了フラグ |
+| **CS** | カウンタアップフラグ | 0x09 | カウンタ動作完了フラグ |
+| **TN** | タイマ現在値 | 0x89 | タイマのカウント値 |
+| **CN** | カウンタ現在値 | 0x89 | カウンタのカウント値 |
+
+#### 🗂️ レジスタデバイス（ワード型）
+| デバイス | 名称 | メモリ領域コード | 説明 |
+|----------|------|----------------|------|
+| **DM** | データメモリ | 0x82 | 汎用データ格納領域 |
+| **EM** | 拡張メモリ | 0x98 | 拡張データメモリ（カレントバンク） |
+| **EB** | 拡張メモリ（バンク指定） | 0xA0 | 拡張メモリ（バンク指定） |
+| **IR** | インデックスレジスタ | 0xDC | アドレス修飾用レジスタ |
+| **DR** | データレジスタ | 0xBC | 汎用データレジスタ |
+
+#### 🎯 タスク・フラグ関連
+| デバイス | 名称 | メモリ領域コード | 説明 |
+|----------|------|----------------|------|
+| **TKB** | タスクフラグ（ビット） | 0x06 | タスク制御用ビットフラグ |
+| **TKS** | タスクフラグ（ステータス） | 0x46 | タスク制御用ステータス |
+
+#### 🔄 後方互換デバイス
+| デバイス | 名称 | メモリ領域コード | 対応デバイス |
+|----------|------|----------------|-------------|
+| **W** | WR領域（旧表記） | 0x31 | WRと同等 |
+| **H** | HR領域（旧表記） | 0x32 | HRと同等 |
+| **A** | AR領域（旧表記） | 0x33 | ARと同等 |
+| **C** | カウンタ（旧表記） | 0x09 | TS/CSと同等 |
+
+#### 💡 デバイス使用例
+
+```csharp
+var simulator = new OmronFINSSimulator();
+
+// 拡張デバイスの使用例
+simulator.SetDeviceValue(new PLCAddress("IO", 100, 1), BitConverter.GetBytes((short)1));     // 入出力リレー
+simulator.SetDeviceValue(new PLCAddress("DM", 200, 1), BitConverter.GetBytes((short)1234));  // データメモリ
+simulator.SetDeviceValue(new PLCAddress("TN", 10, 1), BitConverter.GetBytes((short)500));    // タイマ現在値
+simulator.SetDeviceValue(new PLCAddress("EM", 0, 1), BitConverter.GetBytes((short)9999));    // 拡張メモリ
+
+// 後方互換デバイスの使用例（同じ動作）
+simulator.SetDeviceValue(new PLCAddress("W", 100, 1), BitConverter.GetBytes((short)1));      // WR領域（旧表記）
+simulator.SetDeviceValue(new PLCAddress("C", 10, 1), BitConverter.GetBytes((short)500));     // カウンタ（旧表記）
+
+// サポートデバイス一覧取得
+var supportedDevices = simulator.GetSupportedDevices();
+Console.WriteLine($"サポートデバイス数: {supportedDevices.Count}");
+foreach (var device in supportedDevices)
+{
+    Console.WriteLine($"  {device.Key}: メモリ領域コード 0x{device.Value:X2}");
+}
+```
+
+#### ⚠️ メモリ領域コードの注意点
+- **同じコードの共有**: TS/CS、TN/CNは同じメモリ領域コードを使用
+- **後方互換性**: W/H/A/Cは旧表記のデバイス名としてサポート
+- **拡張デバイス**: IO/WR/HR/AR等の新しいデバイスは0xB0-0xBCの範囲を使用
 
 ## インストール
 

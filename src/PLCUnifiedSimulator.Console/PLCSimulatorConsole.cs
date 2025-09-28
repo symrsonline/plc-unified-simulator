@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using PLCUnifiedSimulator.Core;
 using PLCUnifiedSimulator.Protocols.Mitsubishi;
 using PLCUnifiedSimulator.Simulators;
@@ -12,9 +14,17 @@ namespace PLCUnifiedSimulator.Console;
 public class PLCSimulatorConsole
 {
     private static readonly Dictionary<MitsubishiPLCSeries, MitsubishiMCSimulator> _runningSimulators = new();
+    private static OmronFINSSimulator? _runningOmronSimulator;
+    private static ILogger? _logger;
+    private static IServiceProvider? _serviceProvider;
 
-    public static async Task RunAsync(string[] args)
+    public static async Task RunAsync(string[] args, IServiceProvider serviceProvider)
     {
+        _serviceProvider = serviceProvider;
+        _logger = serviceProvider.GetRequiredService<ILogger<PLCSimulatorConsole>>();
+
+        _logger.LogInformation("PLC Unified Simulator Console を開始します");
+
         System.Console.WriteLine("==============================================");
         System.Console.WriteLine("      PLC Unified Simulator Console");
         System.Console.WriteLine("==============================================");
@@ -26,11 +36,13 @@ public class PLCSimulatorConsole
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "メインメニューの実行中にエラーが発生しました");
             System.Console.WriteLine($"エラーが発生しました: {ex.Message}");
         }
         finally
         {
             await StopAllSimulatorsAsync();
+            _logger.LogInformation("PLC Unified Simulator Console を終了します");
         }
     }
 
@@ -43,14 +55,15 @@ public class PLCSimulatorConsole
             System.Console.WriteLine("1. 利用可能なPLCシリーズ一覧表示");
             System.Console.WriteLine("2. 特定のPLCシミュレータを開始");
             System.Console.WriteLine("3. 全てのPLCシミュレータを開始");
-            System.Console.WriteLine("4. 実行中のシミュレータ状態表示");
-            System.Console.WriteLine("5. テストデータ設定");
-            System.Console.WriteLine("6. デバイス値表示");
-            System.Console.WriteLine("7. シミュレータ停止");
-            System.Console.WriteLine("8. 通信プロトコル設定");
+            System.Console.WriteLine("4. オムロンFINSシミュレータを開始");
+            System.Console.WriteLine("5. 実行中のシミュレータ状態表示");
+            System.Console.WriteLine("6. テストデータ設定");
+            System.Console.WriteLine("7. デバイス値表示");
+            System.Console.WriteLine("8. シミュレータ停止");
+            System.Console.WriteLine("9. 通信プロトコル設定");
             System.Console.WriteLine("0. 終了");
             System.Console.WriteLine();
-            System.Console.Write("選択してください (0-8): ");
+            System.Console.Write("選択してください (0-9): ");
 
             var choice = System.Console.ReadLine();
 
@@ -66,24 +79,27 @@ public class PLCSimulatorConsole
                     await StartAllSimulatorsAsync();
                     break;
                 case "4":
-                    ShowRunningSimulators();
+                    await StartOmronSimulatorAsync();
                     break;
                 case "5":
-                    await SetTestDataAsync();
+                    ShowRunningSimulators();
                     break;
                 case "6":
-                    await ShowDeviceValuesAsync();
+                    await SetTestDataAsync();
                     break;
                 case "7":
-                    await StopSimulatorAsync();
+                    await ShowDeviceValuesAsync();
                     break;
                 case "8":
+                    await StopSimulatorAsync();
+                    break;
+                case "9":
                     ShowProtocolConfiguration();
                     break;
                 case "0":
                     return;
                 default:
-                    System.Console.WriteLine("無効な選択です。0-8の範囲で入力してください。");
+                    System.Console.WriteLine("無効な選択です。0-9の範囲で入力してください。");
                     break;
             }
         }
@@ -138,18 +154,21 @@ public class PLCSimulatorConsole
     {
         if (_runningSimulators.ContainsKey(series))
         {
+            _logger?.LogWarning("{Series} シリーズは既に実行中です", series);
             System.Console.WriteLine($"シリーズ {series} は既に実行中です。");
             return;
         }
 
         try
         {
-            var simulator = MitsubishiPLCSimulatorFactory.CreateSimulator(series);
+            _logger?.LogInformation("{Series} シミュレータの開始を開始します", series);
+            var simulator = new MitsubishiMCSimulator(series, _logger);
             var seriesInfo = MitsubishiPLCSeriesInfo.GetSeriesInfo(series);
 
             await simulator.StartAsync(seriesInfo.DefaultPort);
             _runningSimulators[series] = simulator;
 
+            _logger?.LogInformation("{Series} シミュレータがポート {Port} で正常に開始されました", series, seriesInfo.DefaultPort);
             System.Console.WriteLine($"✓ {series} シミュレータが開始されました");
             System.Console.WriteLine($"  ポート: {seriesInfo.DefaultPort}");
             System.Console.WriteLine($"  説明: {seriesInfo.Description}");
@@ -160,6 +179,7 @@ public class PLCSimulatorConsole
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex, "{Series} シミュレータの開始に失敗しました", series);
             System.Console.WriteLine($"✗ シミュレータの開始に失敗しました: {ex.Message}");
         }
     }
@@ -185,13 +205,49 @@ public class PLCSimulatorConsole
         System.Console.WriteLine($"完了: {_runningSimulators.Count}/{availableSeries.Count} シミュレータが実行中");
     }
 
+    private static async Task StartOmronSimulatorAsync()
+    {
+        if (_runningOmronSimulator != null)
+        {
+            _logger?.LogWarning("オムロンFINSシミュレータは既に実行中です");
+            System.Console.WriteLine("オムロンFINSシミュレータは既に実行中です。");
+            return;
+        }
+
+        try
+        {
+            _logger?.LogInformation("オムロンFINSシミュレータの開始を開始します");
+            var simulator = OmronPLCSimulatorFactory.CreateSimulator(_logger);
+            var simulatorInfo = OmronPLCSimulatorFactory.GetSimulatorInfo();
+
+            await simulator.StartAsync(simulatorInfo.DefaultPort);
+            _runningOmronSimulator = simulator;
+
+            _logger?.LogInformation("オムロンFINSシミュレータがポート {Port} で正常に開始されました", simulatorInfo.DefaultPort);
+            System.Console.WriteLine($"✓ オムロンFINSシミュレータが開始されました");
+            System.Console.WriteLine($"  ポート: {simulatorInfo.DefaultPort}");
+            System.Console.WriteLine($"  説明: {simulatorInfo.Description}");
+            System.Console.WriteLine($"  プロトコル: FINS");
+
+            // テストデータを自動設定
+            await SetDefaultTestDataForOmron(simulator);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "オムロンFINSシミュレータの開始に失敗しました");
+            System.Console.WriteLine($"✗ オムロンFINSシミュレータの開始に失敗しました: {ex.Message}");
+        }
+    }
+
     private static void ShowRunningSimulators()
     {
         System.Console.WriteLine();
         System.Console.WriteLine("実行中のシミュレータ:");
         System.Console.WriteLine("=" + new string('=', 80));
 
-        if (_runningSimulators.Count == 0)
+        var totalCount = _runningSimulators.Count + (_runningOmronSimulator != null ? 1 : 0);
+
+        if (totalCount == 0)
         {
             System.Console.WriteLine("実行中のシミュレータはありません。");
             return;
@@ -210,6 +266,19 @@ public class PLCSimulatorConsole
             System.Console.WriteLine($"  サポートデバイス数: {simulator.GetSupportedDevices().Count}");
             System.Console.WriteLine();
         }
+
+        if (_runningOmronSimulator != null)
+        {
+            var simulatorInfo = OmronPLCSimulatorFactory.GetSimulatorInfo();
+            System.Console.WriteLine($"シリーズ: オムロンFINS");
+            System.Console.WriteLine($"  ポート: {simulatorInfo.DefaultPort}");
+            System.Console.WriteLine($"  説明: {simulatorInfo.Description}");
+            System.Console.WriteLine($"  プロトコル: FINS");
+            System.Console.WriteLine($"  サポートデバイス数: {_runningOmronSimulator.GetSupportedDevices().Count}");
+            System.Console.WriteLine();
+        }
+
+        System.Console.WriteLine($"総実行数: {totalCount} シミュレータ");
     }
 
     private static Task SetDefaultTestData(MitsubishiMCSimulator simulator, MitsubishiPLCSeries series)
@@ -252,6 +321,55 @@ public class PLCSimulatorConsole
             }
 
             System.Console.WriteLine($"  デフォルトテストデータを設定しました (D100-109, M100-115, X0-15)");
+        }
+        catch (Exception ex)
+        {
+            System.Console.WriteLine($"  テストデータ設定エラー: {ex.Message}");
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static Task SetDefaultTestDataForOmron(OmronFINSSimulator simulator)
+    {
+        try
+        {
+            var supportedDevices = simulator.GetSupportedDevices();
+
+            // DMレジスタのテストデータ設定
+            if (supportedDevices.ContainsKey("DM"))
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var address = new PLCAddress("DM", 100 + i, 1);
+                    var value = BitConverter.GetBytes((ushort)(1000 + i * 111));
+                    simulator.SetDeviceValue(address, value);
+                }
+            }
+
+            // 内部補助リレーのテストデータ設定
+            if (supportedDevices.ContainsKey("WR"))
+            {
+                for (int i = 0; i < 16; i++)
+                {
+                    var address = new PLCAddress("WR", 100 + i, 1);
+                    var value = new byte[] { (byte)(i % 2), 0 };
+                    simulator.SetDeviceValue(address, value);
+                }
+            }
+
+            // 入出力リレーのテストデータ設定
+            if (supportedDevices.ContainsKey("IO"))
+            {
+                for (int i = 0; i < 16; i++)
+                {
+                    var address = new PLCAddress("IO", i, 1);
+                    var value = new byte[] { (byte)((i % 4) == 0 ? 1 : 0), 0 };
+                    simulator.SetDeviceValue(address, value);
+                }
+            }
+
+            System.Console.WriteLine($"  デフォルトテストデータを設定しました (DM100-109, WR100-115, IO0-15)");
         }
         catch (Exception ex)
         {
@@ -452,14 +570,21 @@ public class PLCSimulatorConsole
         {
             try
             {
+                _logger?.LogInformation("{Series} シミュレータの停止を開始します", series);
                 await simulator.StopAsync();
                 _runningSimulators.Remove(series);
+                _logger?.LogInformation("{Series} シミュレータが正常に停止されました", series);
                 System.Console.WriteLine($"✓ {series} シミュレータを停止しました");
             }
             catch (Exception ex)
             {
+                _logger?.LogError(ex, "{Series} シミュレータの停止に失敗しました", series);
                 System.Console.WriteLine($"✗ シミュレータの停止に失敗しました: {ex.Message}");
             }
+        }
+        else
+        {
+            _logger?.LogWarning("{Series} シミュレータは実行中ではありません", series);
         }
     }
 
@@ -473,9 +598,38 @@ public class PLCSimulatorConsole
             stopTasks.Add(StopSpecificSimulatorAsync(kvp.Key));
         }
 
+        if (_runningOmronSimulator != null)
+        {
+            stopTasks.Add(StopOmronSimulatorAsync());
+        }
+
         await Task.WhenAll(stopTasks);
 
         System.Console.WriteLine("✓ 全てのシミュレータを停止しました");
+    }
+
+    private static async Task StopOmronSimulatorAsync()
+    {
+        if (_runningOmronSimulator != null)
+        {
+            try
+            {
+                _logger?.LogInformation("オムロンFINSシミュレータの停止を開始します");
+                await _runningOmronSimulator.StopAsync();
+                _runningOmronSimulator = null;
+                _logger?.LogInformation("オムロンFINSシミュレータが正常に停止されました");
+                System.Console.WriteLine($"✓ オムロンFINSシミュレータを停止しました");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "オムロンFINSシミュレータの停止に失敗しました");
+                System.Console.WriteLine($"✗ オムロンFINSシミュレータの停止に失敗しました: {ex.Message}");
+            }
+        }
+        else
+        {
+            _logger?.LogWarning("オムロンFINSシミュレータは実行中ではありません");
+        }
     }
 
     private static void ShowProtocolConfiguration()

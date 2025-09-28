@@ -1,5 +1,7 @@
 using System.Net.Sockets;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using PLCUnifiedSimulator.Core;
 
 namespace PLCUnifiedSimulator.Protocols.Mitsubishi;
@@ -18,7 +20,8 @@ public class MitsubishiMCProtocol : PLCProtocolBase
     public override string ProtocolName => $"Mitsubishi MC Protocol ({_seriesInfo.Description})";
     public override int DefaultPort => _seriesInfo.DefaultPort;
 
-    public MitsubishiMCProtocol(MitsubishiPLCSeries series = MitsubishiPLCSeries.QJ71E71_Binary_Station1)
+    public MitsubishiMCProtocol(MitsubishiPLCSeries series = MitsubishiPLCSeries.QJ71E71_Binary_Station1, ILogger? logger = null)
+        : base(logger ?? NullLogger<MitsubishiMCProtocol>.Instance)
     {
         PLCSeries = series;
         _seriesInfo = MitsubishiPLCSeriesInfo.GetSeriesInfo(series);
@@ -28,14 +31,17 @@ public class MitsubishiMCProtocol : PLCProtocolBase
     {
         try
         {
+            _logger.LogInformation("TCP接続を開始します: {IPAddress}:{Port}", ipAddress, port);
             _tcpClient = new TcpClient();
             await _tcpClient.ConnectAsync(ipAddress, port, cancellationToken);
             _stream = _tcpClient.GetStream();
             _isConnected = true;
+            _logger.LogInformation("TCP接続に成功しました: {IPAddress}:{Port}", ipAddress, port);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "TCP接続に失敗しました: {IPAddress}:{Port}", ipAddress, port);
             await DisconnectAsync();
             return false;
         }
@@ -44,13 +50,16 @@ public class MitsubishiMCProtocol : PLCProtocolBase
     public override async Task<bool> ConnectUdpAsync(string ipAddress, int port, CancellationToken cancellationToken = default)
     {
         // UDPは接続レス型プロトコルのため、常に成功とする
+        _logger.LogInformation("UDP接続を設定します: {IPAddress}:{Port}", ipAddress, port);
         _isConnected = true;
+        _logger.LogInformation("UDP接続設定が完了しました: {IPAddress}:{Port}", ipAddress, port);
         await Task.CompletedTask;
         return true;
     }
 
     public override async Task DisconnectAsync()
     {
+        _logger.LogInformation("接続を切断します");
         lock (_lockObject)
         {
             _stream?.Close();
@@ -61,16 +70,22 @@ public class MitsubishiMCProtocol : PLCProtocolBase
             _tcpClient = null;
             _isConnected = false;
         }
+        _logger.LogInformation("接続が切断されました");
         await Task.CompletedTask;
     }
 
     public override async Task<PLCData?> ReadAsync(PLCAddress address, CancellationToken cancellationToken = default)
     {
         if (!_isConnected || _stream == null)
+        {
+            _logger.LogWarning("読み取り要求が拒否されました: 接続されていません");
             return null;
+        }
 
         try
         {
+            _logger.LogDebug("デバイス読み取りを開始します: {DeviceType}{Address} (サイズ: {Size})", address.DeviceType, address.Address, address.Size);
+
             // デバイスアクセス前の検証
             ValidateDeviceAccess(address);
 
@@ -83,23 +98,28 @@ public class MitsubishiMCProtocol : PLCProtocolBase
             if (IsValidResponse(response, bytesRead))
             {
                 var data = ExtractDataFromResponse(response, bytesRead, address.Size * 2); // 2 bytes per word
+                _logger.LogDebug("デバイス読み取りに成功しました: {DeviceType}{Address}, データサイズ: {DataSize} bytes", address.DeviceType, address.Address, data.Length);
                 return new PLCData(address, data);
             }
 
+            _logger.LogWarning("デバイス読み取りに失敗しました: 無効なレスポンスを受信しました - {DeviceType}{Address}", address.DeviceType, address.Address);
             return null;
         }
         catch (NotSupportedException)
         {
             // 未サポートデバイスの例外は再スロー
+            _logger.LogError("未サポートデバイスへのアクセスが試行されました: {DeviceType}", address.DeviceType);
             throw;
         }
         catch (ArgumentException)
         {
             // 引数エラーの例外は再スロー
+            _logger.LogError("無効なアドレス指定です: {DeviceType}{Address}", address.DeviceType, address.Address);
             throw;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "デバイス読み取り中にエラーが発生しました: {DeviceType}{Address}", address.DeviceType, address.Address);
             return null;
         }
     }
@@ -107,10 +127,15 @@ public class MitsubishiMCProtocol : PLCProtocolBase
     public override async Task<bool> WriteAsync(PLCAddress address, byte[] data, CancellationToken cancellationToken = default)
     {
         if (!_isConnected || _stream == null)
+        {
+            _logger.LogWarning("書き込み要求が拒否されました: 接続されていません");
             return false;
+        }
 
         try
         {
+            _logger.LogDebug("デバイス書き込みを開始します: {DeviceType}{Address}, データサイズ: {DataSize} bytes", address.DeviceType, address.Address, data.Length);
+
             // デバイスアクセス前の検証
             ValidateDeviceAccess(address);
 
@@ -120,20 +145,32 @@ public class MitsubishiMCProtocol : PLCProtocolBase
             var response = new byte[256];
             var bytesRead = await _stream.ReadAsync(response, cancellationToken);
 
-            return IsValidResponse(response, bytesRead);
+            var success = IsValidResponse(response, bytesRead);
+            if (success)
+            {
+                _logger.LogDebug("デバイス書き込みに成功しました: {DeviceType}{Address}", address.DeviceType, address.Address);
+            }
+            else
+            {
+                _logger.LogWarning("デバイス書き込みに失敗しました: 無効なレスポンスを受信しました - {DeviceType}{Address}", address.DeviceType, address.Address);
+            }
+            return success;
         }
         catch (NotSupportedException)
         {
             // 未サポートデバイスの例外は再スロー
+            _logger.LogError("未サポートデバイスへのアクセスが試行されました: {DeviceType}", address.DeviceType);
             throw;
         }
         catch (ArgumentException)
         {
             // 引数エラーの例外は再スロー
+            _logger.LogError("無効なアドレス指定です: {DeviceType}{Address}", address.DeviceType, address.Address);
             throw;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "デバイス書き込み中にエラーが発生しました: {DeviceType}{Address}", address.DeviceType, address.Address);
             return false;
         }
     }

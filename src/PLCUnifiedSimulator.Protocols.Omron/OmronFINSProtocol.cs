@@ -1,4 +1,5 @@
 using System.Net.Sockets;
+using Microsoft.Extensions.Logging;
 using PLCUnifiedSimulator.Core;
 
 namespace PLCUnifiedSimulator.Protocols.Omron;
@@ -16,6 +17,10 @@ public class OmronFINSProtocol : PLCProtocolBase
 
     public override string ProtocolName => "OMRON FINS";
     public override int DefaultPort => 9600;
+
+    public OmronFINSProtocol(ILogger? logger = null) : base(logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<OmronFINSProtocol>.Instance)
+    {
+    }
 
     public override async Task<bool> ConnectAsync(string ipAddress, int port, CancellationToken cancellationToken = default)
     {

@@ -1,5 +1,7 @@
 namespace PLCUnifiedSimulator.Core;
 
+using Microsoft.Extensions.Logging;
+
 /// <summary>
 /// PLC通信のインターフェース
 /// </summary>
@@ -14,6 +16,11 @@ public interface IPLCProtocol
     /// デフォルトポート番号
     /// </summary>
     int DefaultPort { get; }
+
+    /// <summary>
+    /// ロガー
+    /// </summary>
+    ILogger Logger { get; }
 
     /// <summary>
     /// TCP接続を開始します
@@ -65,6 +72,11 @@ public interface IPLCSimulator
     /// サポートしているプロトコル
     /// </summary>
     IPLCProtocol Protocol { get; }
+
+    /// <summary>
+    /// ロガー
+    /// </summary>
+    ILogger Logger { get; }
 
     /// <summary>
     /// TCP接続でシミュレータを開始します

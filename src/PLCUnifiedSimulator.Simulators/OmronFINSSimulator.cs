@@ -1,4 +1,5 @@
 using System.Net.Sockets;
+using Microsoft.Extensions.Logging;
 using PLCUnifiedSimulator.Core;
 using PLCUnifiedSimulator.Protocols.Omron;
 
@@ -14,6 +15,10 @@ public class OmronFINSSimulator : PLCSimulatorBase
     private byte _nextNodeAddress = 0x01;
 
     public override IPLCProtocol Protocol => _protocol;
+
+    public OmronFINSSimulator(ILogger? logger = null) : base(logger)
+    {
+    }
 
     protected override async Task HandleUdpPacketAsync(byte[] data, System.Net.IPEndPoint remoteEndPoint, CancellationToken cancellationToken)
     {

@@ -53,6 +53,8 @@ jobs:
         directory: ./coverage
         fail_ci_if_error: true
         verbose: true
+      env:
+        CODECOV_TOKEN: b2f18deb-ec62-4afb-ad90-fd56add53474
 
   build:
     name: Build

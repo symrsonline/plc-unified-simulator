@@ -27,8 +27,6 @@
         "exclude": [
           "_site/**",
           "api/**",
-          "docker-compose.yml",
-          "docker-compose.dev.yml",
           "filterConfig.yml"
         ]
       }

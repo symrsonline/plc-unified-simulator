@@ -3,7 +3,6 @@
 [![CI](https://github.com/symrsonline/plc-unified-simulator/workflows/CI/badge.svg)](https://github.com/symrsonline/plc-unified-simulator/actions/workflows/ci.yml)
 [![Release](https://github.com/symrsonline/plc-unified-simulator/workflows/Release/badge.svg)](https://github.com/symrsonline/plc-unified-simulator/actions/workflows/release.yml)
 [![codecov](https://codecov.io/gh/symrsonline/plc-unified-simulator/branch/master/graph/badge.svg)](https://codecov.io/gh/symrsonline/plc-unified-simulator)
-[![Docker](https://img.shields.io/docker/v/symrsonline/plc-unified-simulator?label=Docker&logo=docker)](https://github.com/symrsonline/plc-unified-simulator/pkgs/container/plc-unified-simulator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![API Docs](https://img.shields.io/badge/API%20Docs-GitHub%20Pages-blue)](https://symrsonline.github.io/plc-unified-simulator/)
 
@@ -362,16 +361,6 @@ foreach (var device in supportedDevices)
 
 ## インストール
 
-### Docker を使用
-
-```bash
-# 最新版を取得して実行
-docker run -p 5000-5050:5000-5050 ghcr.io/symrsonline/plc-unified-simulator:latest
-
-# または Docker Compose を使用
-docker-compose up -d
-```
-
 ### リリースバイナリ
 
 [Releases](https://github.com/symrsonline/plc-unified-simulator/releases) から各プラットフォーム用のビルド済みバイナリをダウンロードできます。
@@ -418,7 +407,6 @@ dotnet test --collect:"XPlat Code Coverage"
 - .NET 8.0 SDK
 - Visual Studio 2022 または Visual Studio Code
 - C# 拡張機能
-- Docker (オプション)
 - xUnit テストランナー（テスト実行用）
 
 ## CI/CD
@@ -429,7 +417,6 @@ dotnet test --collect:"XPlat Code Coverage"
 - **マルチプラットフォームテスト**: Ubuntu、Windows での動作確認
 - **コードカバレッジ**: Codecov による自動カバレッジレポート
 - **自動リリース**: タグ作成時の自動バイナリビルド・配布
-- **Docker イメージ**: GitHub Container Registry への自動公開
 - **依存関係管理**: Dependabot による自動アップデート
 
 ## ライセンス

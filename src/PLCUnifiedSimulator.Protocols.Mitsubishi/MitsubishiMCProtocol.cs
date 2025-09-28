@@ -13,6 +13,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 {
     private TcpClient? _tcpClient;
     private NetworkStream? _stream;
+    private UdpClient? _udpClient;
     private readonly object _lockObject = new();
     private MitsubishiPLCSeriesInfo _seriesInfo;
 
@@ -49,12 +50,23 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
     public override async Task<bool> ConnectUdpAsync(string ipAddress, int port, CancellationToken cancellationToken = default)
     {
-        // UDPは接続レス型プロトコルのため、常に成功とする
-        _logger.LogInformation("UDP接続を設定します: {IPAddress}:{Port}", ipAddress, port);
-        _isConnected = true;
-        _logger.LogInformation("UDP接続設定が完了しました: {IPAddress}:{Port}", ipAddress, port);
-        await Task.CompletedTask;
-        return true;
+        try
+        {
+            _logger.LogInformation("UDP接続を設定します: {IPAddress}:{Port}", ipAddress, port);
+            _udpClient = new UdpClient();
+            // 既定の送信先として接続先を関連付け
+            _udpClient.Connect(ipAddress, port);
+            _isConnected = true;
+            _logger.LogInformation("UDP接続設定が完了しました: {IPAddress}:{Port}", ipAddress, port);
+            await Task.CompletedTask;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UDP接続設定に失敗しました: {IPAddress}:{Port}", ipAddress, port);
+            await DisconnectAsync();
+            return false;
+        }
     }
 
     public override async Task DisconnectAsync()
@@ -66,8 +78,11 @@ public class MitsubishiMCProtocol : PLCProtocolBase
             _stream?.Dispose();
             _tcpClient?.Close();
             _tcpClient?.Dispose();
+            _udpClient?.Close();
+            _udpClient?.Dispose();
             _stream = null;
             _tcpClient = null;
+            _udpClient = null;
             _isConnected = false;
         }
         _logger.LogInformation("接続が切断されました");
@@ -76,7 +91,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
     public override async Task<PLCData?> ReadAsync(PLCAddress address, CancellationToken cancellationToken = default)
     {
-        if (!_isConnected || _stream == null)
+        if (!_isConnected)
         {
             _logger.LogWarning("読み取り要求が拒否されました: 接続されていません");
             return null;
@@ -90,10 +105,27 @@ public class MitsubishiMCProtocol : PLCProtocolBase
             ValidateDeviceAccess(address);
 
             var request = CreateReadRequest(address);
-            await _stream.WriteAsync(request, cancellationToken);
+            byte[] response;
+            int bytesRead;
 
-            var response = new byte[1024];
-            var bytesRead = await _stream.ReadAsync(response, cancellationToken);
+            if (_stream != null)
+            {
+                await _stream.WriteAsync(request, cancellationToken);
+                response = new byte[1024];
+                bytesRead = await _stream.ReadAsync(response, cancellationToken);
+            }
+            else if (_udpClient != null)
+            {
+                await _udpClient.SendAsync(request);
+                var udpResult = await _udpClient.ReceiveAsync();
+                response = udpResult.Buffer;
+                bytesRead = response.Length;
+            }
+            else
+            {
+                _logger.LogWarning("読み取り要求が拒否されました: 通信チャネルが初期化されていません");
+                return null;
+            }
 
             if (IsValidResponse(response, bytesRead))
             {
@@ -101,7 +133,12 @@ public class MitsubishiMCProtocol : PLCProtocolBase
                 _logger.LogDebug("デバイス読み取りに成功しました: {DeviceType}{Address}, データサイズ: {DataSize} bytes", address.DeviceType, address.Address, data.Length);
                 return new PLCData(address, data);
             }
-
+            // デバッグ情報: 無効なレスポンスを受信した場合の生データを出力
+            try
+            {
+                Console.WriteLine($"[MitsubishiMCProtocol] Invalid response ({bytesRead} bytes): {BitConverter.ToString(response, 0, Math.Min(bytesRead, response.Length))}");
+            }
+            catch { }
             _logger.LogWarning("デバイス読み取りに失敗しました: 無効なレスポンスを受信しました - {DeviceType}{Address}", address.DeviceType, address.Address);
             return null;
         }
@@ -126,7 +163,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
     public override async Task<bool> WriteAsync(PLCAddress address, byte[] data, CancellationToken cancellationToken = default)
     {
-        if (!_isConnected || _stream == null)
+        if (!_isConnected)
         {
             _logger.LogWarning("書き込み要求が拒否されました: 接続されていません");
             return false;
@@ -140,10 +177,27 @@ public class MitsubishiMCProtocol : PLCProtocolBase
             ValidateDeviceAccess(address);
 
             var request = CreateWriteRequest(address, data);
-            await _stream.WriteAsync(request, cancellationToken);
+            byte[] response;
+            int bytesRead;
 
-            var response = new byte[256];
-            var bytesRead = await _stream.ReadAsync(response, cancellationToken);
+            if (_stream != null)
+            {
+                await _stream.WriteAsync(request, cancellationToken);
+                response = new byte[256];
+                bytesRead = await _stream.ReadAsync(response, cancellationToken);
+            }
+            else if (_udpClient != null)
+            {
+                await _udpClient.SendAsync(request);
+                var udpResult = await _udpClient.ReceiveAsync();
+                response = udpResult.Buffer;
+                bytesRead = response.Length;
+            }
+            else
+            {
+                _logger.LogWarning("書き込み要求が拒否されました: 通信チャネルが初期化されていません");
+                return false;
+            }
 
             var success = IsValidResponse(response, bytesRead);
             if (success)
@@ -153,6 +207,12 @@ public class MitsubishiMCProtocol : PLCProtocolBase
             else
             {
                 _logger.LogWarning("デバイス書き込みに失敗しました: 無効なレスポンスを受信しました - {DeviceType}{Address}", address.DeviceType, address.Address);
+                // デバッグ情報: 無効なレスポンスを受信した場合の生データを出力
+                try
+                {
+                    Console.WriteLine($"[MitsubishiMCProtocol] Invalid response ({bytesRead} bytes): {BitConverter.ToString(response, 0, Math.Min(bytesRead, response.Length))}");
+                }
+                catch { }
             }
             return success;
         }
@@ -198,7 +258,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
         frame.Add(_seriesInfo.StationNumber); // 要求先局番号
         frame.AddRange(BitConverter.GetBytes(_seriesInfo.ModuleIONumber)); // 要求先ユニットI/O番号
         frame.Add(_seriesInfo.MultiDropStationNumber); // 要求先マルチドロップ局番号
-        frame.AddRange(BitConverter.GetBytes((ushort)18)); // 要求データ長
+        frame.AddRange(BitConverter.GetBytes((ushort)10)); // 要求データ長
 
         // コマンド
         frame.AddRange(BitConverter.GetBytes((ushort)0x0401)); // バッチ読み出し
@@ -208,8 +268,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
         // デバイスコードとアドレス
         var deviceInfo = GetDeviceInfo(address.DeviceType);
-        frame.AddRange(BitConverter.GetBytes(address.Address)); // 先頭デバイス番号(3バイト)
-        frame.Add(0x00);
+        frame.AddRange(BitConverter.GetBytes(address.Address).Take(3).ToArray()); // 先頭デバイス番号(3バイト)
         frame.Add(deviceInfo.Code); // デバイスコード
         frame.AddRange(BitConverter.GetBytes((ushort)address.Size)); // デバイス点数
 
@@ -262,7 +321,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
         frame.Add(_seriesInfo.StationNumber); // 要求先局番号
         frame.AddRange(BitConverter.GetBytes(_seriesInfo.ModuleIONumber)); // 要求先ユニットI/O番号
         frame.Add(_seriesInfo.MultiDropStationNumber); // 要求先マルチドロップ局番号
-        frame.AddRange(BitConverter.GetBytes((ushort)(18 + data.Length))); // 要求データ長
+        frame.AddRange(BitConverter.GetBytes((ushort)(10 + data.Length))); // 要求データ長
 
         // コマンド
         frame.AddRange(BitConverter.GetBytes((ushort)0x1401)); // バッチ書き込み
@@ -272,8 +331,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
         // デバイスコードとアドレス
         var deviceInfo = GetDeviceInfo(address.DeviceType);
-        frame.AddRange(BitConverter.GetBytes(address.Address)); // 先頭デバイス番号(3バイト)
-        frame.Add(0x00);
+        frame.AddRange(BitConverter.GetBytes(address.Address).Take(3).ToArray()); // 先頭デバイス番号(3バイト)
         frame.Add(deviceInfo.Code); // デバイスコード
         frame.AddRange(BitConverter.GetBytes((ushort)address.Size)); // デバイス点数
 
@@ -310,18 +368,35 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
     private bool IsValidResponse(byte[] response, int length)
     {
-        if (length < 11) return false;
+        if (length < 13) return false;
 
-        // エラーコードをチェック (オフセット9-10)
-        var errorCode = BitConverter.ToUInt16(response, 9);
-        return errorCode == 0;
+        // サブヘッダ確認
+        if (length >= 4)
+        {
+            var subHeader = Encoding.ASCII.GetString(response, 0, Math.Min(4, length));
+            if (subHeader == "D000")
+            {
+                // 応答データ長(9-10)の後にエラーコード(11-12)
+                var errorCode = BitConverter.ToUInt16(response, 11);
+                return errorCode == 0;
+            }
+        }
+
+        // フォールバック: 旧実装との互換
+        var fallbackOffset = Math.Min(11, Math.Max(0, length - 2));
+        var fallbackCode = BitConverter.ToUInt16(response, fallbackOffset);
+        return fallbackCode == 0;
     }
 
     private byte[] ExtractDataFromResponse(byte[] response, int length, int dataSize)
     {
-        // データ部分は11バイト目から開始
+        // データ部分はエラーコードの後(13バイト目)から開始
+        var dataStart = 13;
         var data = new byte[dataSize];
-        Array.Copy(response, 11, data, 0, Math.Min(dataSize, length - 11));
+        if (length > dataStart)
+        {
+            Array.Copy(response, dataStart, data, 0, Math.Min(dataSize, length - dataStart));
+        }
         return data;
     }
 

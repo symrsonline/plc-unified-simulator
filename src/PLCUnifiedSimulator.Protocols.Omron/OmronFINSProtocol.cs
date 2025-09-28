@@ -11,6 +11,7 @@ public class OmronFINSProtocol : PLCProtocolBase
 {
     private TcpClient? _tcpClient;
     private NetworkStream? _stream;
+    private UdpClient? _udpClient;
     private readonly object _lockObject = new();
     private byte _sourceNodeAddress = 0x01;
     private byte _destinationNodeAddress = 0x00;
@@ -49,10 +50,19 @@ public class OmronFINSProtocol : PLCProtocolBase
 
     public override async Task<bool> ConnectUdpAsync(string ipAddress, int port, CancellationToken cancellationToken = default)
     {
-        // UDPは接続レス型プロトコルのため、常に成功とする
-        _isConnected = true;
-        await Task.CompletedTask;
-        return true;
+        try
+        {
+            _udpClient = new UdpClient();
+            _udpClient.Connect(ipAddress, port);
+            _isConnected = true;
+            await Task.CompletedTask;
+            return true;
+        }
+        catch
+        {
+            await DisconnectAsync();
+            return false;
+        }
     }
 
     public override async Task DisconnectAsync()
@@ -63,8 +73,11 @@ public class OmronFINSProtocol : PLCProtocolBase
             _stream?.Dispose();
             _tcpClient?.Close();
             _tcpClient?.Dispose();
+            _udpClient?.Close();
+            _udpClient?.Dispose();
             _stream = null;
             _tcpClient = null;
+            _udpClient = null;
             _isConnected = false;
         }
         await Task.CompletedTask;
@@ -72,22 +85,49 @@ public class OmronFINSProtocol : PLCProtocolBase
 
     public override async Task<PLCData?> ReadAsync(PLCAddress address, CancellationToken cancellationToken = default)
     {
-        if (!_isConnected || _stream == null)
+        if (!_isConnected)
             return null;
 
         try
         {
-            var request = CreateReadRequest(address);
-            await _stream.WriteAsync(request, cancellationToken);
+            var request = _udpClient == null ? CreateReadRequest(address) : CreateUdpReadRequest(address);
 
-            var response = new byte[1024];
-            var bytesRead = await _stream.ReadAsync(response, cancellationToken);
+            byte[] response;
+            int bytesRead;
 
-            if (IsValidFINSResponse(response, bytesRead))
+            if (_stream != null)
             {
-                var data = ExtractDataFromResponse(response, bytesRead, address.Size * 2);
+                await _stream.WriteAsync(request, cancellationToken);
+                response = new byte[1024];
+                bytesRead = await _stream.ReadAsync(response, cancellationToken);
+            }
+            else if (_udpClient != null)
+            {
+                await _udpClient.SendAsync(request);
+                var udpResult = await _udpClient.ReceiveAsync();
+                response = udpResult.Buffer;
+                bytesRead = response.Length;
+            }
+            else
+            {
+                return null;
+            }
+
+            if ((_udpClient == null && IsValidFINSResponse(response, bytesRead)) ||
+                (_udpClient != null && IsValidFINSUdpResponse(response, bytesRead)))
+            {
+                var data = (_udpClient == null)
+                    ? ExtractDataFromResponse(response, bytesRead, address.Size * 2)
+                    : ExtractDataFromUdpResponse(response, bytesRead, address.Size * 2);
                 return new PLCData(address, data);
             }
+
+            // デバッグ情報: 無効なレスポンスを受信した場合の生データを出力
+            try
+            {
+                Console.WriteLine($"[OmronFINSProtocol] Invalid response ({bytesRead} bytes): {BitConverter.ToString(response, 0, Math.Min(bytesRead, response.Length))}");
+            }
+            catch { }
 
             return null;
         }
@@ -99,18 +139,45 @@ public class OmronFINSProtocol : PLCProtocolBase
 
     public override async Task<bool> WriteAsync(PLCAddress address, byte[] data, CancellationToken cancellationToken = default)
     {
-        if (!_isConnected || _stream == null)
+        if (!_isConnected)
             return false;
 
         try
         {
-            var request = CreateWriteRequest(address, data);
-            await _stream.WriteAsync(request, cancellationToken);
+            var request = _udpClient == null ? CreateWriteRequest(address, data) : CreateUdpWriteRequest(address, data);
 
-            var response = new byte[256];
-            var bytesRead = await _stream.ReadAsync(response, cancellationToken);
+            byte[] response;
+            int bytesRead;
 
-            return IsValidFINSResponse(response, bytesRead);
+            if (_stream != null)
+            {
+                await _stream.WriteAsync(request, cancellationToken);
+                response = new byte[256];
+                bytesRead = await _stream.ReadAsync(response, cancellationToken);
+                return IsValidFINSResponse(response, bytesRead);
+            }
+            else if (_udpClient != null)
+            {
+                await _udpClient.SendAsync(request);
+                var udpResult = await _udpClient.ReceiveAsync();
+                response = udpResult.Buffer;
+                bytesRead = response.Length;
+                var success = IsValidFINSUdpResponse(response, bytesRead);
+                if (!success)
+                {
+                    // デバッグ情報: 無効なレスポンスを受信した場合の生データを出力
+                    try
+                    {
+                        Console.WriteLine($"[OmronFINSProtocol] Invalid response ({bytesRead} bytes): {BitConverter.ToString(response, 0, Math.Min(bytesRead, response.Length))}");
+                    }
+                    catch { }
+                }
+                return success;
+            }
+            else
+            {
+                return false;
+            }
         }
         catch
         {
@@ -248,11 +315,28 @@ public class OmronFINSProtocol : PLCProtocolBase
         return response[28] == 0x00 && response[29] == 0x00;
     }
 
+    // UDP (TCPヘッダなし) 用の応答検証
+    private bool IsValidFINSUdpResponse(byte[] response, int length)
+    {
+        if (length < 12) return false;
+        // UDP FINS応答: ICF(0xC0), RSV, GCT, DNA,DA1,DA2, SNA,SA1,SA2, SID, MRC,SRC
+        // 正常は MRC/SRC が 0x00/0x00
+        return response[10] == 0x00 && response[11] == 0x00;
+    }
+
     private byte[] ExtractDataFromResponse(byte[] response, int length, int dataSize)
     {
         // データ部分は30バイト目から開始
         var data = new byte[dataSize];
         Array.Copy(response, 30, data, 0, Math.Min(dataSize, length - 30));
+        return data;
+    }
+
+    // UDP FINS: データは12バイト目以降
+    private byte[] ExtractDataFromUdpResponse(byte[] response, int length, int dataSize)
+    {
+        var data = new byte[dataSize];
+        Array.Copy(response, 12, data, 0, Math.Min(dataSize, length - 12));
         return data;
     }
 
@@ -285,5 +369,70 @@ public class OmronFINSProtocol : PLCProtocolBase
             "CT" => (0x09, "カウンタ"),
             _ => (0x82, "不明")
         };
+    }
+
+    // --- UDP 専用フレーム組み立て ---
+    private byte[] CreateUdpReadRequest(PLCAddress address)
+    {
+        var memoryArea = GetMemoryAreaCode(address.DeviceType);
+        var addressBytes = BitConverter.GetBytes((ushort)address.Address);
+        if (BitConverter.IsLittleEndian)
+        {
+            Array.Reverse(addressBytes);
+        }
+
+        // UDP FINSフレーム（TCPヘッダなし）
+        var frame = new List<byte>
+        {
+            0x80, // ICF
+            0x00, // RSV
+            0x02, // GCT
+            0x00, // DNA (未使用: ブロードキャスト/直接指定しない)
+            0x00, // DA1
+            0x00, // DA2
+            _sourceNodeAddress, // SNA
+            0x00, // SA1
+            0x00, // SA2
+            0x00, // SID
+            0x01, 0x01, // メモリアクセス 読み出し
+            memoryArea.Code,
+            addressBytes[1], addressBytes[0],
+            0x00, // ビット位置
+            0x00, (byte)address.Size
+        };
+
+        return frame.ToArray();
+    }
+
+    private byte[] CreateUdpWriteRequest(PLCAddress address, byte[] data)
+    {
+        var memoryArea = GetMemoryAreaCode(address.DeviceType);
+        var addressBytes = BitConverter.GetBytes((ushort)address.Address);
+        if (BitConverter.IsLittleEndian)
+        {
+            Array.Reverse(addressBytes);
+        }
+
+        var frame = new List<byte>
+        {
+            0x80, // ICF
+            0x00, // RSV
+            0x02, // GCT
+            0x00, // DNA
+            0x00, // DA1
+            0x00, // DA2
+            _sourceNodeAddress, // SNA
+            0x00, // SA1
+            0x00, // SA2
+            0x00, // SID
+            0x01, 0x02, // メモリアクセス 書き込み
+            memoryArea.Code,
+            addressBytes[1], addressBytes[0],
+            0x00, // ビット位置
+            0x00, (byte)address.Size
+        };
+
+        frame.AddRange(data);
+        return frame.ToArray();
     }
 }

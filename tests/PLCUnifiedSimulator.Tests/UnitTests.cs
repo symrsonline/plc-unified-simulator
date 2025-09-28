@@ -1376,9 +1376,7 @@ public class IntegrationTests : TestBase
             // Act - 値を読み取り
             var readResult = await protocol.ReadAsync(address);
             readResult.Should().NotBeNull();
-
-            // Assert
-            readResult.Should().BeEquivalentTo(testValue);
+            readResult!.Data.Should().BeEquivalentTo(testValue);
         }
         finally
         {
@@ -1413,9 +1411,7 @@ public class IntegrationTests : TestBase
             // Act - 値を読み取り
             var readResult = await protocol.ReadAsync(address);
             readResult.Should().NotBeNull();
-
-            // Assert
-            readResult.Should().BeEquivalentTo(testValue);
+            readResult!.Data.Should().BeEquivalentTo(testValue);
         }
         finally
         {
@@ -1458,7 +1454,7 @@ public class IntegrationTests : TestBase
                                 // 読み取り
                                 var readResult = await protocol.ReadAsync(address);
                                 readResult.Should().NotBeNull();
-                                readResult.Should().BeEquivalentTo(testValue);
+                                readResult!.Data.Should().BeEquivalentTo(testValue);
                             }
                         }
                         finally
@@ -1523,7 +1519,7 @@ public class IntegrationTests : TestBase
             {
                 var readResult = await protocol.ReadAsync(addresses[i]);
                 readResult.Should().NotBeNull();
-                readResult.Should().BeEquivalentTo(values[i]);
+                readResult!.Data.Should().BeEquivalentTo(values[i]);
             }
 
             // Assert - シミュレータの内部状態も確認
@@ -1610,7 +1606,7 @@ public class IntegrationTests : TestBase
                 // 読み取り
                 var readResult = await protocol.ReadAsync(address);
                 readResult.Should().NotBeNull();
-                readResult.Should().BeEquivalentTo(value);
+                readResult!.Data.Should().BeEquivalentTo(value);
             }
         }
         finally

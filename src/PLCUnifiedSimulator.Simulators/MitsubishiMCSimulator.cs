@@ -31,7 +31,9 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
         try
         {
             _logger.LogDebug("UDPパケット処理を開始します: {RemoteEndPoint}, データサイズ: {Size} bytes", remoteEndPoint, data.Length);
+            Console.WriteLine($"[MitsubishiMCSimulator] Received UDP packet: {BitConverter.ToString(data)}");
             var response = ProcessMCRequest(data, data.Length);
+            Console.WriteLine($"[MitsubishiMCSimulator] Sending UDP response: {BitConverter.ToString(response)}");
             if (response.Length > 0 && _udpListener != null)
             {
                 await _udpListener.SendAsync(response, remoteEndPoint);
@@ -90,6 +92,8 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
         try
         {
             _logger.LogDebug("MC要求処理を開始します: データサイズ {Length} bytes", length);
+            _logger.LogDebug("MC要求データ: {Data}", BitConverter.ToString(request, 0, Math.Min(length, request.Length)));
+            Console.WriteLine($"[MitsubishiMCSimulator] Processing MC request, command=0x{BitConverter.ToUInt16(request, 15):X4}");
 
             if (length < 21)
             {
@@ -105,8 +109,8 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
                 return CreateMCErrorResponse(0xC050); // フレーム異常
             }
 
-            var command = BitConverter.ToUInt16(request, 15);
-            var subCommand = BitConverter.ToUInt16(request, 17);
+            var command = BitConverter.ToUInt16(request, 11);
+            var subCommand = BitConverter.ToUInt16(request, 13);
 
             _logger.LogDebug("MCコマンドを解析しました: コマンド 0x{Command:X4}, サブコマンド 0x{SubCommand:X4}", command, subCommand);
 
@@ -129,18 +133,18 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
 
     private byte[] ProcessReadRequest(byte[] request, int length)
     {
-        if (length < 26)
+        if (length < 21)
         {
-            _logger.LogWarning("MC読み取り要求データ長が不足しています: 期待 26 bytes以上, 実際 {Length} bytes", length);
+            _logger.LogWarning("MC読み取り要求データ長が不足しています: 期待 21 bytes以上, 実際 {Length} bytes", length);
             return CreateMCErrorResponse(0xC059);
         }
 
         try
         {
             // デバイス情報を取得
-            var deviceAddress = BitConverter.ToInt32(request, 19) & 0xFFFFFF; // 3バイト
-            var deviceCode = request[22];
-            var deviceCount = BitConverter.ToUInt16(request, 23);
+            var deviceAddress = BitConverter.ToInt32(request, 15) & 0xFFFFFF; // 3バイト
+            var deviceCode = request[18];
+            var deviceCount = BitConverter.ToUInt16(request, 19);
 
             var deviceType = GetDeviceTypeFromCode(deviceCode);
 
@@ -180,18 +184,20 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
 
     private byte[] ProcessWriteRequest(byte[] request, int length)
     {
-        if (length < 26)
+        if (length < 21)
         {
-            _logger.LogWarning("MC書き込み要求データ長が不足しています: 期待 26 bytes以上, 実際 {Length} bytes", length);
+            _logger.LogWarning("MC書き込み要求データ長が不足しています: 期待 21 bytes以上, 実際 {Length} bytes", length);
             return CreateMCErrorResponse(0xC059);
         }
 
         try
         {
+            _logger.LogDebug("MC書き込み要求処理を開始します: データサイズ {Length} bytes", length);
+            Console.WriteLine($"[MitsubishiMCSimulator] Processing write request, length={length}, dataOffset=21");
             // デバイス情報を取得
-            var deviceAddress = BitConverter.ToInt32(request, 19) & 0xFFFFFF; // 3バイト
-            var deviceCode = request[22];
-            var deviceCount = BitConverter.ToUInt16(request, 23);
+            var deviceAddress = BitConverter.ToInt32(request, 15) & 0xFFFFFF; // 3バイト
+            var deviceCode = request[18];
+            var deviceCount = BitConverter.ToUInt16(request, 19);
 
             var deviceType = GetDeviceTypeFromCode(deviceCode);
 
@@ -205,7 +211,7 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
                 return CreateMCErrorResponse(0xC058); // 指定デバイスなし
             }
 
-            var dataOffset = 25;
+            var dataOffset = 21;
 
             // 指定されたデバイスにデータを書き込み
             for (int i = 0; i < deviceCount; i++)

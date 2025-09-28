@@ -96,13 +96,13 @@ public class PLCSimulatorConsole
         System.Console.WriteLine("=" + new string('=', 80));
 
         var availableSeries = MitsubishiPLCSimulatorFactory.GetAvailableSeries();
-        
+
         foreach (var (series, description, port) in availableSeries)
         {
             var isRunning = _runningSimulators.ContainsKey(series) ? "[実行中]" : "[停止中]";
             System.Console.WriteLine($"{(int)series,2}: {series,-35} | Port:{port,5} | {description} {isRunning}");
         }
-        
+
         System.Console.WriteLine("=" + new string('=', 80));
         System.Console.WriteLine($"総数: {availableSeries.Count} シリーズ");
     }
@@ -121,8 +121,8 @@ public class PLCSimulatorConsole
         }
 
         System.Console.Write($"選択してください (1-{availableSeries.Count}): ");
-        
-        if (int.TryParse(System.Console.ReadLine(), out var selection) && 
+
+        if (int.TryParse(System.Console.ReadLine(), out var selection) &&
             selection >= 1 && selection <= availableSeries.Count)
         {
             var selectedSeries = availableSeries[selection - 1];
@@ -146,15 +146,15 @@ public class PLCSimulatorConsole
         {
             var simulator = MitsubishiPLCSimulatorFactory.CreateSimulator(series);
             var seriesInfo = MitsubishiPLCSeriesInfo.GetSeriesInfo(series);
-            
+
             await simulator.StartAsync(seriesInfo.DefaultPort);
             _runningSimulators[series] = simulator;
-            
+
             System.Console.WriteLine($"✓ {series} シミュレータが開始されました");
             System.Console.WriteLine($"  ポート: {seriesInfo.DefaultPort}");
             System.Console.WriteLine($"  説明: {seriesInfo.Description}");
             System.Console.WriteLine($"  プロトコル: {(seriesInfo.IsBinaryProtocol ? "バイナリ" : "ASCII")}");
-            
+
             // テストデータを自動設定
             await SetDefaultTestData(simulator, series);
         }
@@ -168,10 +168,10 @@ public class PLCSimulatorConsole
     {
         System.Console.WriteLine();
         System.Console.WriteLine("全てのPLCシミュレータを開始中...");
-        
+
         var availableSeries = MitsubishiPLCSimulatorFactory.GetAvailableSeries();
         var startTasks = new List<Task>();
-        
+
         foreach (var (series, _, _) in availableSeries)
         {
             if (!_runningSimulators.ContainsKey(series))
@@ -179,9 +179,9 @@ public class PLCSimulatorConsole
                 startTasks.Add(StartSimulatorAsync(series));
             }
         }
-        
+
         await Task.WhenAll(startTasks);
-        
+
         System.Console.WriteLine($"完了: {_runningSimulators.Count}/{availableSeries.Count} シミュレータが実行中");
     }
 
@@ -190,19 +190,19 @@ public class PLCSimulatorConsole
         System.Console.WriteLine();
         System.Console.WriteLine("実行中のシミュレータ:");
         System.Console.WriteLine("=" + new string('=', 80));
-        
+
         if (_runningSimulators.Count == 0)
         {
             System.Console.WriteLine("実行中のシミュレータはありません。");
             return;
         }
-        
+
         foreach (var kvp in _runningSimulators)
         {
             var series = kvp.Key;
             var simulator = kvp.Value;
             var seriesInfo = MitsubishiPLCSeriesInfo.GetSeriesInfo(series);
-            
+
             System.Console.WriteLine($"シリーズ: {series}");
             System.Console.WriteLine($"  ポート: {seriesInfo.DefaultPort}");
             System.Console.WriteLine($"  説明: {seriesInfo.Description}");
@@ -217,7 +217,7 @@ public class PLCSimulatorConsole
         try
         {
             var supportedDevices = simulator.GetSupportedDevices();
-            
+
             // Dレジスタのテストデータ設定
             if (supportedDevices.ContainsKey("D"))
             {
@@ -228,7 +228,7 @@ public class PLCSimulatorConsole
                     simulator.SetDeviceValue(address, value);
                 }
             }
-            
+
             // 内部リレーのテストデータ設定
             if (supportedDevices.ContainsKey("M"))
             {
@@ -239,7 +239,7 @@ public class PLCSimulatorConsole
                     simulator.SetDeviceValue(address, value);
                 }
             }
-            
+
             // 入力リレーのテストデータ設定
             if (supportedDevices.ContainsKey("X"))
             {
@@ -250,14 +250,14 @@ public class PLCSimulatorConsole
                     simulator.SetDeviceValue(address, value);
                 }
             }
-            
+
             System.Console.WriteLine($"  デフォルトテストデータを設定しました (D100-109, M100-115, X0-15)");
         }
         catch (Exception ex)
         {
             System.Console.WriteLine($"  テストデータ設定エラー: {ex.Message}");
         }
-        
+
         return Task.CompletedTask;
     }
 
@@ -271,22 +271,22 @@ public class PLCSimulatorConsole
 
         System.Console.WriteLine();
         System.Console.WriteLine("テストデータを設定するシミュレータを選択:");
-        
+
         var simulatorList = _runningSimulators.ToList();
         for (int i = 0; i < simulatorList.Count; i++)
         {
             System.Console.WriteLine($"{i + 1}: {simulatorList[i].Key}");
         }
-        
+
         System.Console.Write($"選択してください (1-{simulatorList.Count}): ");
-        
-        if (!int.TryParse(System.Console.ReadLine(), out var selection) || 
+
+        if (!int.TryParse(System.Console.ReadLine(), out var selection) ||
             selection < 1 || selection > simulatorList.Count)
         {
             System.Console.WriteLine("無効な選択です。");
             return;
         }
-        
+
         var selectedSimulator = simulatorList[selection - 1];
         await SetCustomTestDataAsync(selectedSimulator.Value, selectedSimulator.Key);
     }
@@ -296,7 +296,7 @@ public class PLCSimulatorConsole
         System.Console.WriteLine();
         System.Console.WriteLine("カスタムテストデータ設定:");
         System.Console.WriteLine($"対象シリーズ: {series}");
-        
+
         var supportedDevices = simulator.GetSupportedDevices();
         System.Console.WriteLine("サポートされているデバイス:");
         foreach (var device in supportedDevices)
@@ -304,43 +304,43 @@ public class PLCSimulatorConsole
             var deviceType = device.Value.IsWordDevice ? "ワード" : "ビット";
             System.Console.WriteLine($"  {device.Key}: {deviceType}デバイス");
         }
-        
+
         System.Console.Write("デバイスタイプ (例: D): ");
         var deviceTypeInput = System.Console.ReadLine()?.ToUpper();
-        
+
         if (string.IsNullOrEmpty(deviceTypeInput) || !supportedDevices.ContainsKey(deviceTypeInput))
         {
             System.Console.WriteLine("サポートされていないデバイスタイプです。");
             return Task.CompletedTask;
         }
-        
+
         System.Console.Write("開始アドレス (例: 100): ");
         if (!int.TryParse(System.Console.ReadLine(), out var startAddress))
         {
             System.Console.WriteLine("無効なアドレスです。");
             return Task.CompletedTask;
         }
-        
+
         System.Console.Write("値 (例: 1234): ");
         if (!int.TryParse(System.Console.ReadLine(), out var value))
         {
             System.Console.WriteLine("無効な値です。");
             return Task.CompletedTask;
         }
-        
+
         try
         {
             var address = new PLCAddress(deviceTypeInput, startAddress, 1);
             var data = BitConverter.GetBytes((ushort)value);
             simulator.SetDeviceValue(address, data);
-            
+
             System.Console.WriteLine($"✓ {deviceTypeInput}{startAddress} に値 {value} を設定しました");
         }
         catch (Exception ex)
         {
             System.Console.WriteLine($"✗ データ設定エラー: {ex.Message}");
         }
-        
+
         return Task.CompletedTask;
     }
 
@@ -354,22 +354,22 @@ public class PLCSimulatorConsole
 
         System.Console.WriteLine();
         System.Console.WriteLine("デバイス値を表示するシミュレータを選択:");
-        
+
         var simulatorList = _runningSimulators.ToList();
         for (int i = 0; i < simulatorList.Count; i++)
         {
             System.Console.WriteLine($"{i + 1}: {simulatorList[i].Key}");
         }
-        
+
         System.Console.Write($"選択してください (1-{simulatorList.Count}): ");
-        
-        if (!int.TryParse(System.Console.ReadLine(), out var selection) || 
+
+        if (!int.TryParse(System.Console.ReadLine(), out var selection) ||
             selection < 1 || selection > simulatorList.Count)
         {
             System.Console.WriteLine("無効な選択です。");
             return Task.CompletedTask;
         }
-        
+
         var selectedSimulator = simulatorList[selection - 1];
         ShowDeviceValues(selectedSimulator.Value, selectedSimulator.Key);
         return Task.CompletedTask;
@@ -380,7 +380,7 @@ public class PLCSimulatorConsole
         System.Console.WriteLine();
         System.Console.WriteLine($"デバイス値表示 - {series}:");
         System.Console.WriteLine("=" + new string('=', 60));
-        
+
         // Dレジスタの値表示
         System.Console.WriteLine("Dレジスタ (D100-109):");
         for (int i = 0; i < 10; i++)
@@ -393,7 +393,7 @@ public class PLCSimulatorConsole
                 System.Console.WriteLine($"  D{100 + i}: {value}");
             }
         }
-        
+
         System.Console.WriteLine();
         System.Console.WriteLine("内部リレー (M100-107):");
         for (int i = 0; i < 8; i++)
@@ -419,22 +419,22 @@ public class PLCSimulatorConsole
         System.Console.WriteLine();
         System.Console.WriteLine("停止するシミュレータを選択:");
         System.Console.WriteLine("0: 全て停止");
-        
+
         var simulatorList = _runningSimulators.ToList();
         for (int i = 0; i < simulatorList.Count; i++)
         {
             System.Console.WriteLine($"{i + 1}: {simulatorList[i].Key}");
         }
-        
+
         System.Console.Write($"選択してください (0-{simulatorList.Count}): ");
-        
-        if (!int.TryParse(System.Console.ReadLine(), out var selection) || 
+
+        if (!int.TryParse(System.Console.ReadLine(), out var selection) ||
             selection < 0 || selection > simulatorList.Count)
         {
             System.Console.WriteLine("無効な選択です。");
             return;
         }
-        
+
         if (selection == 0)
         {
             await StopAllSimulatorsAsync();
@@ -466,15 +466,15 @@ public class PLCSimulatorConsole
     private static async Task StopAllSimulatorsAsync()
     {
         System.Console.WriteLine("全てのシミュレータを停止中...");
-        
+
         var stopTasks = new List<Task>();
         foreach (var kvp in _runningSimulators.ToList())
         {
             stopTasks.Add(StopSpecificSimulatorAsync(kvp.Key));
         }
-        
+
         await Task.WhenAll(stopTasks);
-        
+
         System.Console.WriteLine("✓ 全てのシミュレータを停止しました");
     }
 
@@ -484,7 +484,7 @@ public class PLCSimulatorConsole
         System.Console.WriteLine("通信プロトコル設定ガイド:");
         System.Console.WriteLine("=" + new string('=', 80));
         System.Console.WriteLine();
-        
+
         System.Console.WriteLine("1. TCP通信設定:");
         System.Console.WriteLine("   - 三菱MCプロトコル (バイナリ)");
         System.Console.WriteLine("     IPアドレス: 127.0.0.1, ポート: 5000-5002");
@@ -493,20 +493,20 @@ public class PLCSimulatorConsole
         System.Console.WriteLine("   - オムロンFINSプロトコル");
         System.Console.WriteLine("     IPアドレス: 127.0.0.1, ポート: 9600");
         System.Console.WriteLine();
-        
+
         System.Console.WriteLine("2. UDP通信設定:");
         System.Console.WriteLine("   - 三菱MCプロトコル (UDP対応)");
         System.Console.WriteLine("     IPアドレス: 127.0.0.1, ポート: 5100-5112");
         System.Console.WriteLine("   - オムロンFINSプロトコル (UDP対応)");
         System.Console.WriteLine("     IPアドレス: 127.0.0.1, ポート: 9700");
         System.Console.WriteLine();
-        
+
         System.Console.WriteLine("3. テスト用デバイスアドレス:");
         System.Console.WriteLine("   - データレジスタ: D100-D109 (値: 1000, 1111, 1222, ...)");
         System.Console.WriteLine("   - 内部リレー: M100-M115 (交互にON/OFF)");
         System.Console.WriteLine("   - 入力リレー: X0-X15 (4つおきにON)");
         System.Console.WriteLine();
-        
+
         System.Console.WriteLine("4. 各PLCシリーズのポート番号:");
         var availableSeries = MitsubishiPLCSimulatorFactory.GetAvailableSeries();
         foreach (var (series, description, port) in availableSeries.Take(10))
@@ -518,7 +518,7 @@ public class PLCSimulatorConsole
         {
             System.Console.WriteLine($"   ... 他 {availableSeries.Count - 10} シリーズ");
         }
-        
+
         System.Console.WriteLine();
         System.Console.WriteLine("5. 接続テスト手順:");
         System.Console.WriteLine("   1) 上記メニューでシミュレータを開始");

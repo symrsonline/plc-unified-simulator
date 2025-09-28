@@ -25,12 +25,12 @@ public static class MitsubishiPLCSimulatorFactory
     public static Dictionary<MitsubishiPLCSeries, MitsubishiMCSimulator> CreateAllSimulators()
     {
         var simulators = new Dictionary<MitsubishiPLCSeries, MitsubishiMCSimulator>();
-        
+
         foreach (MitsubishiPLCSeries series in Enum.GetValues<MitsubishiPLCSeries>())
         {
             simulators[series] = CreateSimulator(series);
         }
-        
+
         return simulators;
     }
 
@@ -46,7 +46,7 @@ public static class MitsubishiPLCSimulatorFactory
         {
             return CreateSimulator(series);
         }
-        
+
         throw new ArgumentException($"無効なPLCシリーズ名です: {seriesName}", nameof(seriesName));
     }
 
@@ -57,13 +57,13 @@ public static class MitsubishiPLCSimulatorFactory
     public static List<(MitsubishiPLCSeries Series, string Description, int Port)> GetAvailableSeries()
     {
         var seriesList = new List<(MitsubishiPLCSeries Series, string Description, int Port)>();
-        
+
         foreach (MitsubishiPLCSeries series in Enum.GetValues<MitsubishiPLCSeries>())
         {
             var info = MitsubishiPLCSeriesInfo.GetSeriesInfo(series);
             seriesList.Add((series, info.Description, info.DefaultPort));
         }
-        
+
         return seriesList.OrderBy(x => x.Port).ToList();
     }
 }

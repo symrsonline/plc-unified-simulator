@@ -24,14 +24,14 @@ public class OmronFINSProtocol : PLCProtocolBase
             _tcpClient = new TcpClient();
             await _tcpClient.ConnectAsync(ipAddress, port, cancellationToken);
             _stream = _tcpClient.GetStream();
-            
+
             // FINS接続確立
             if (await EstablishFINSConnection())
             {
                 _isConnected = true;
                 return true;
             }
-            
+
             await DisconnectAsync();
             return false;
         }
@@ -77,13 +77,13 @@ public class OmronFINSProtocol : PLCProtocolBase
 
             var response = new byte[1024];
             var bytesRead = await _stream.ReadAsync(response, cancellationToken);
-            
+
             if (IsValidFINSResponse(response, bytesRead))
             {
                 var data = ExtractDataFromResponse(response, bytesRead, address.Size * 2);
                 return new PLCData(address, data);
             }
-            
+
             return null;
         }
         catch
@@ -104,7 +104,7 @@ public class OmronFINSProtocol : PLCProtocolBase
 
             var response = new byte[256];
             var bytesRead = await _stream.ReadAsync(response, cancellationToken);
-            
+
             return IsValidFINSResponse(response, bytesRead);
         }
         catch
@@ -238,7 +238,7 @@ public class OmronFINSProtocol : PLCProtocolBase
     private bool IsValidFINSResponse(byte[] response, int length)
     {
         if (length < 30) return false;
-        
+
         // FINS応答の結果コードをチェック
         return response[28] == 0x00 && response[29] == 0x00;
     }

@@ -22,7 +22,7 @@ A clear and concise description of what you expected to happen.
 A clear and concise description of what actually happened.
 
 ## Environment
-- OS: [e.g. Windows 11, Ubuntu 22.04, macOS 13]
+- OS: [e.g. Windows 11, Ubuntu 22.04]
 - .NET Version: [e.g. 8.0.0]
 - PLC Simulator Version: [e.g. 1.0.0]
 - PLC Series: [e.g. Q/L/iQ-R, FX5U]

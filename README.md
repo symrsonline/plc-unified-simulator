@@ -335,7 +335,6 @@ docker-compose up -d
 
 - Windows (x64): `plc-unified-simulator-win-x64.zip`
 - Linux (x64): `plc-unified-simulator-linux-x64.tar.gz`
-- macOS (x64): `plc-unified-simulator-osx-x64.tar.gz`
 
 ### ソースからビルド
 
@@ -384,7 +383,7 @@ dotnet test --collect:"XPlat Code Coverage"
 このプロジェクトは GitHub Actions を使用した CI/CD パイプラインを実装しています：
 
 - **継続的インテグレーション**: プッシュ・プルリクエスト時の自動テスト実行
-- **マルチプラットフォームテスト**: Ubuntu、Windows、macOS での動作確認
+- **マルチプラットフォームテスト**: Ubuntu、Windows での動作確認
 - **コードカバレッジ**: Codecov による自動カバレッジレポート
 - **自動リリース**: タグ作成時の自動バイナリビルド・配布
 - **Docker イメージ**: GitHub Container Registry への自動公開

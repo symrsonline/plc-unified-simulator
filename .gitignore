@@ -20,4 +20,3 @@ api/
 coverage/
 *.yml
 *.yaml
-filterConfig.yml

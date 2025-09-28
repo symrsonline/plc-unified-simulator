@@ -32,7 +32,8 @@ PLCUnifiedSimulator/
 │   ├── PLCUnifiedSimulator.Protocols.Mitsubishi/  # 三菱MCプロトコル
 │   ├── PLCUnifiedSimulator.Protocols.Omron/       # オムロンFINSプロトコル
 │   ├── PLCUnifiedSimulator.Simulators/     # シミュレータ実装
-│   └── PLCUnifiedSimulator.Console/        # コンソールアプリケーション
+│   ├── PLCUnifiedSimulator.Console/        # コンソールアプリケーション
+│   └── PLCUnifiedSimulator.GUI.Avalonia/   # クロスプラットフォーム GUI
 ├── tests/
 │   └── PLCUnifiedSimulator.Tests/          # 単体テスト
 └── PLCUnifiedSimulator.sln                 # ソリューションファイル
@@ -62,7 +63,26 @@ dotnet test
 
 ### シミュレータ起動
 
-#### インタラクティブモード（デフォルト）
+#### GUIアプリケーション（推奨）
+```bash
+dotnet run --project src/PLCUnifiedSimulator.GUI.Avalonia
+```
+
+**Material Design 3.0準拠**のモダンでレスポンシブなクロスプラットフォーム対応GUIアプリケーション。
+
+**主な特徴:**
+- 🎨 **Material Design**: Google Material Design 3.0準拠のモダンなUI
+- 📱 **レスポンシブ**: タブレット・デスクトップ・小画面に最適化
+- 🌈 **統一テーマ**: 青を基調とした統一感のあるカラーパレット
+- ⚡ **インタラクティブ**: スムーズなホバーエフェクトとアニメーション
+
+**機能タブ:**
+- **シミュレータ管理**: PLCシリーズ選択、個別/一括開始・停止
+- **テストデータ**: デバイス値の設定・確認、デフォルトテストデータ一括設定
+- **プロトコル設定**: 三菱MC・オムロンFINS各種パラメータ設定
+- **ログ**: リアルタイムアクティビティ表示・ログクリア
+
+#### コンソール（インタラクティブモード）
 ```bash
 dotnet run --project src/PLCUnifiedSimulator.Console
 ```
@@ -435,7 +455,19 @@ dotnet test --collect:"XPlat Code Coverage"
 
 ## 最新の更新情報
 
-### v2.2 品質向上・保守性強化（最新版）
+### v2.4 Material Design & レスポンシブ対応（最新版）
+- ✅ **Material Design**: Google Material Design 3.0準拠のモダンなUI
+- ✅ **レスポンシブ対応**: タブレット・デスクトップ・小画面に最適化
+- ✅ **アクセシビリティ向上**: 直感的なボタン・カード・タイポグラフィ
+- ✅ **カスタムテーマ**: 青を基調とした統一感のあるカラーパレット
+- ✅ **ホバーエフェクト**: インタラクティブな操作フィードバック
+
+### v2.3 GUI機能拡充
+- ✅ **GUIアプリケーション**: Avaloniaベースクロスプラットフォーム対応
+- ✅ **完全機能パリティ**: Console機能をすべてGUIで利用可能
+- ✅ **タブ型インターフェース**: シミュレータ管理・テストデータ・設定・ログ
+
+### v2.2 品質向上・保守性強化
 - ✅ **リポジトリ整理**: 不要ファイル削除、.gitignore最適化
 - ✅ **ビルド品質向上**: 警告除去、クリーンコンパイル実現
 - ✅ **ドキュメント改善**: DocFX APIドキュメント生成
@@ -459,6 +491,7 @@ dotnet test --collect:"XPlat Code Coverage"
 - 🔄 REST APIインターフェース（計画中）
 - 🔄 設定ファイルによる動的構成（計画中）
 - 🔄 ログ記録・モニタリング機能強化（計画中）
+- 🔄 GUIテーマ設定・カスタマイゼーション（計画中）
 
 ## 注意事項
 

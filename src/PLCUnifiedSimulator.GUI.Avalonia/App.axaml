@@ -1,12 +1,77 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:PLCUnifiedSimulator.GUI.Avalonia"
+             xmlns:converters="clr-namespace:PLCUnifiedSimulator.GUI.Avalonia.Converters"
              x:Class="PLCUnifiedSimulator.GUI.Avalonia.App">
+  
+  <Application.Resources>
+    <!-- Material Design 3.0 Dynamic Color System -->
+    <SolidColorBrush x:Key="PrimaryBrush" Color="#6750A4"/>
+    <SolidColorBrush x:Key="OnPrimaryBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="PrimaryContainerBrush" Color="#EADDFF"/>
+    <SolidColorBrush x:Key="OnPrimaryContainerBrush" Color="#21005D"/>
+    
+    <SolidColorBrush x:Key="SecondaryBrush" Color="#625B71"/>
+    <SolidColorBrush x:Key="OnSecondaryBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SecondaryContainerBrush" Color="#E8DEF8"/>
+    <SolidColorBrush x:Key="OnSecondaryContainerBrush" Color="#1D192B"/>
+    
+    <SolidColorBrush x:Key="TertiaryBrush" Color="#7D5260"/>
+    <SolidColorBrush x:Key="OnTertiaryBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="TertiaryContainerBrush" Color="#FFD8E4"/>
+    <SolidColorBrush x:Key="OnTertiaryContainerBrush" Color="#31111D"/>
+    
+    <!-- Surface Colors -->
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFBFE"/>
+    <SolidColorBrush x:Key="OnSurfaceBrush" Color="#1C1B1F"/>
+    <SolidColorBrush x:Key="SurfaceVariantBrush" Color="#E7E0EC"/>
+    <SolidColorBrush x:Key="OnSurfaceVariantBrush" Color="#49454F"/>
+    
+    <SolidColorBrush x:Key="SurfaceContainerBrush" Color="#F3EDF7"/>
+    <SolidColorBrush x:Key="SurfaceContainerHighBrush" Color="#ECE6F0"/>
+    <SolidColorBrush x:Key="SurfaceContainerHighestBrush" Color="#E6E0E9"/>
+    
+    <!-- Outline Colors -->
+    <SolidColorBrush x:Key="OutlineBrush" Color="#79747E"/>
+    <SolidColorBrush x:Key="OutlineVariantBrush" Color="#CAC4D0"/>
+    
+    <!-- Status Colors -->
+    <SolidColorBrush x:Key="ErrorBrush" Color="#BA1A1A"/>
+    <SolidColorBrush x:Key="OnErrorBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ErrorContainerBrush" Color="#FFDAD6"/>
+    <SolidColorBrush x:Key="OnErrorContainerBrush" Color="#410002"/>
+    
+    <SolidColorBrush x:Key="SuccessBrush" Color="#146C2E"/>
+    <SolidColorBrush x:Key="OnSuccessBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SuccessContainerBrush" Color="#B7F397"/>
+    <SolidColorBrush x:Key="OnSuccessContainerBrush" Color="#002106"/>
+    
+    <SolidColorBrush x:Key="WarningBrush" Color="#825500"/>
+    <SolidColorBrush x:Key="OnWarningBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="WarningContainerBrush" Color="#FFDDB3"/>
+    <SolidColorBrush x:Key="OnWarningContainerBrush" Color="#2A1800"/>
+    
+    <!-- Elevation Shadows -->
+    <SolidColorBrush x:Key="ShadowBrush" Color="#1C000000"/>
+    <SolidColorBrush x:Key="ShadowVariantBrush" Color="#0F000000"/>
+    
+    <!-- Converters -->
+    <converters:ResponsiveConverter x:Key="ResponsiveConverter"/>
+    <converters:ResponsiveColumnConverter x:Key="ResponsiveColumnConverter"/>
+    <converters:ResponsiveButtonWidthConverter x:Key="ResponsiveButtonWidthConverter"/>
+    <converters:ResponsiveDashboardConverter x:Key="ResponsiveDashboardConverter"/>
+    <converters:ResponsiveNavRailConverter x:Key="ResponsiveNavRailConverter"/>
+    <converters:ResponsiveNavVisibilityConverter x:Key="ResponsiveNavVisibilityConverter"/>
+    <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter"/>
+    <converters:ResponsiveUniformGridConverter x:Key="ResponsiveUniformGridConverter"/>
+  </Application.Resources>
+
   <Application.DataTemplates>
     <local:ViewLocator/>
   </Application.DataTemplates>
 
   <Application.Styles>
+    <!-- Fluent Theme as Base -->
     <FluentTheme />
   </Application.Styles>
 </Application>

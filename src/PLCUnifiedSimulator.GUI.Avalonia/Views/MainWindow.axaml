@@ -1,175 +1,543 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:PLCUnifiedSimulator.GUI.Avalonia.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        xmlns:converters="clr-namespace:PLCUnifiedSimulator.GUI.Avalonia.Converters"
+        mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
         x:Class="PLCUnifiedSimulator.GUI.Avalonia.Views.MainWindow"
-        Title="{Binding Title}"
-        MinWidth="600" MinHeight="500"
-        Width="900" Height="700"
-        Background="#F0F0F3"
-        WindowStartupLocation="CenterScreen"
-        CanResize="True">
+        x:DataType="vm:MainWindowViewModel"
+        Title="PLC Unified Simulator - Modern Interface"
+        WindowState="Normal"
+        Width="1200"
+        Height="800"
+        CanResize="True"
+        MinWidth="800"
+        MinHeight="600"
+        Background="{DynamicResource SurfaceBrush}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        SystemDecorations="None"
+        WindowStartupLocation="CenterScreen">
 
-    <!-- Neumorphism Styles -->
     <Window.Styles>
-        <Style Selector="Border.neumorphism">
-            <Setter Property="Background" Value="#F0F0F3"/>
-            <Setter Property="CornerRadius" Value="15"/>
-            <Setter Property="BoxShadow" Value="5 5 10 #D1D1D4, -5 -5 10 #FFFFFF"/>
-            <Setter Property="Margin" Value="10"/>
-        </Style>
-
-        <Style Selector="Border.neumorphism-inset">
-            <Setter Property="Background" Value="#F0F0F3"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="BoxShadow" Value="inset 3 3 6 #D1D1D4, inset -3 -3 6 #FFFFFF"/>
-            <Setter Property="Margin" Value="5"/>
-        </Style>
-
-        <Style Selector="Button.neumorphism">
-            <Setter Property="Background" Value="#F0F0F3"/>
-            <Setter Property="BorderThickness" Value="0"/>
+        <!-- Modern Card Style -->
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}"/>
             <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="15,8"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#4A4A4A"/>
-            <Setter Property="Template">
-                <ControlTemplate>
-                    <Border Name="border"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{TemplateBinding CornerRadius}"
-                            BoxShadow="5 5 10 #D1D1D4, -5 -5 10 #FFFFFF">
-                        <ContentPresenter Name="PART_ContentPresenter"
-                                        Content="{TemplateBinding Content}"
-                                        Margin="{TemplateBinding Padding}"
-                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                    </Border>
-                </ControlTemplate>
-            </Setter>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="Margin" Value="12"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariantBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
-        <Style Selector="TextBox.neumorphism">
-            <Setter Property="Background" Value="#F0F0F3"/>
+        <Style Selector="Border.card:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}"/>
+        </Style>
+
+        <!-- Modern Button Styles -->
+        <Style Selector="Button.filled">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}"/>
+            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="8"/>
-            <Setter Property="Margin" Value="0,2"/>
         </Style>
 
-        <Style Selector="ComboBox.neumorphism">
-            <Setter Property="Background" Value="#F0F0F3"/>
+        <Style Selector="Button.filled:pointerover">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="Opacity" Value="0.8"/>
+        </Style>
+
+        <Style Selector="Button.tonal">
+            <Setter Property="Background" Value="{DynamicResource SecondaryContainerBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSecondaryContainerBrush}"/>
+            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="8"/>
-            <Setter Property="Margin" Value="0,2"/>
         </Style>
 
-        <Style Selector="ListBox.neumorphism">
-            <Setter Property="Background" Value="#F0F0F3"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="8"/>
+        <Style Selector="Button.outlined">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
-        <!-- Responsive Text Styles -->
-        <Style Selector="TextBlock.title">
+        <!-- Modern Typography -->
+        <Style Selector="TextBlock.display-large">
+            <Setter Property="FontSize" Value="57"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+        </Style>
+
+        <Style Selector="TextBlock.display-medium">
+            <Setter Property="FontSize" Value="45"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+        </Style>
+
+        <Style Selector="TextBlock.headline-large">
+            <Setter Property="FontSize" Value="32"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+        </Style>
+
+        <Style Selector="TextBlock.headline-medium">
             <Setter Property="FontSize" Value="28"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
-            <Setter Property="Foreground" Value="#4A4A4A"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
         </Style>
 
-        <Style Selector="TextBlock.section">
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="Margin" Value="0,0,0,15"/>
-            <Setter Property="Foreground" Value="#4A4A4A"/>
+        <Style Selector="TextBlock.title-large">
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+        </Style>
+
+        <Style Selector="TextBlock.title-medium">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+        </Style>
+
+        <Style Selector="TextBlock.body-large">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+        </Style>
+
+        <Style Selector="TextBlock.body-medium">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+        </Style>
+
+        <Style Selector="TextBlock.label-large">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+        </Style>
+
+        <!-- Status Indicators -->
+        <Style Selector="TextBlock.status-success">
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+
+        <Style Selector="TextBlock.status-error">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+
+        <Style Selector="TextBlock.status-warning">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+
+        <!-- Navigation Rail -->
+        <Style Selector="Border.nav-rail">
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariantBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+        </Style>
+
+        <!-- Navigation Item -->
+        <Style Selector="Border.nav-item">
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Margin" Value="12,4"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Border.nav-item:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SecondaryContainerBrush}"/>
+        </Style>
+
+        <Style Selector="Border.nav-item.selected">
+            <Setter Property="Background" Value="{DynamicResource PrimaryContainerBrush}"/>
+        </Style>
+
+        <!-- Input Fields -->
+        <Style Selector="TextBox.modern">
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
+
+        <Style Selector="TextBox.modern:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+
+        <!-- List Containers -->
+        <Style Selector="ListBox.modern">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style Selector="ListBoxItem.modern">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="4,2"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+
+        <Style Selector="ListBoxItem.modern:selected">
+            <Setter Property="Background" Value="{DynamicResource SecondaryContainerBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSecondaryContainerBrush}"/>
+        </Style>
+
+        <Style Selector="ListBoxItem.modern:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}"/>
+        </Style>
+
+        <!-- Data Grid -->
+        <Style Selector="DataGrid.modern">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+        </Style>
+
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariantBrush}"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Padding" Value="16,12"/>
+        </Style>
+
+        <Style Selector="DataGridRow">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="DataGridRow:selected">
+            <Setter Property="Background" Value="{DynamicResource SecondaryContainerBrush}"/>
+        </Style>
+
+        <Style Selector="DataGridRow:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}"/>
+        </Style>
+
+        <!-- Mobile Menu Button -->
+        <Style Selector="Button.menu-button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Width" Value="48"/>
+            <Setter Property="Height" Value="48"/>
+        </Style>
+
+        <Style Selector="Button.menu-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}"/>
+        </Style>
+
+        <!-- Mobile Navigation Overlay -->
+        <Style Selector="Border.mobile-nav-overlay">
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}"/>
+            <Setter Property="Width" Value="280"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariantBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+        </Style>
+
+        <!-- Window Control Buttons -->
+        <Style Selector="Button.window-control">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+        </Style>
+
+        <Style Selector="Button.window-control:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}"/>
+        </Style>
+
+        <Style Selector="Button.window-control.close:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ErrorBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnErrorBrush}"/>
         </Style>
     </Window.Styles>
 
-    <Grid RowDefinitions="Auto,*,Auto" Margin="20" Background="#F0F0F3">
-        <!-- Header -->
-        <Border Classes="neumorphism" Grid.Row="0" Margin="0,0,0,20">
-            <StackPanel Margin="20">
-                <TextBlock x:Name="TitleText" Classes="title" Text="PLC Unified Simulator"/>
-                <TextBlock Text="{Binding StatusMessage}" FontSize="16" HorizontalAlignment="Center"
-                          Foreground="#6A6A6A" FontWeight="Medium"/>
-            </StackPanel>
+    <!-- Custom Title Bar -->
+    <Grid RowDefinitions="Auto,*">
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceContainerBrush}" Height="48">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="8,0,0,0">
+                <!-- Mobile Menu Button -->
+                <Button Grid.Column="0" Classes="menu-button" Content="☰" FontSize="18" 
+                       IsVisible="{Binding !IsVisible, ElementName=NavRail}" Name="MobileMenuButton"/>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                    <TextBlock Text="🏭" FontSize="20" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <TextBlock Text="PLC Unified Simulator" Classes="title-large" VerticalAlignment="Center"/>
+                </StackPanel>
+                
+                <!-- Draggable Area -->
+                <Border Grid.Column="2" Background="Transparent" Name="TitleBarDragArea"/>
+                
+                <TextBlock Grid.Column="3" Text="{Binding StatusMessage}" Classes="body-medium" 
+                          Foreground="{DynamicResource OnSurfaceVariantBrush}" VerticalAlignment="Center" 
+                          Margin="0,0,16,0"/>
+                
+                <!-- Window Control Buttons -->
+                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Classes="window-control" Content="&#xE921;" Name="MinimizeButton" 
+                           ToolTip.Tip="最小化" Command="{Binding MinimizeWindowCommand}"/>
+                    <Button Classes="window-control" Content="&#xE922;" Name="MaximizeButton" 
+                           ToolTip.Tip="最大化" Command="{Binding MaximizeWindowCommand}"/>
+                    <Button Classes="window-control close" Content="&#xE8BB;" Name="CloseButton" 
+                           ToolTip.Tip="閉じる" Command="{Binding CloseWindowCommand}"/>
+                </StackPanel>
+            </Grid>
         </Border>
 
-        <!-- Main Content -->
-        <Grid x:Name="MainContentGrid" Grid.Row="1" ColumnDefinitions="*,320">
-            <!-- Control Panel -->
-            <ScrollViewer Grid.Column="0" Margin="0,0,20,0">
-                <StackPanel x:Name="ControlPanel">
-                <!-- Connection Settings -->
-                <Border Classes="neumorphism">
-                    <StackPanel Margin="20">
-                        <TextBlock x:Name="ConnectionTitle" Classes="section" Text="Connection Settings"/>
-                        <StackPanel Margin="10">
-                            <StackPanel Margin="0,0,0,15">
-                                <TextBlock Text="Protocol:" FontWeight="Medium" Margin="0,0,0,5" Foreground="#6A6A6A"/>
-                                <ComboBox Classes="neumorphism" ItemsSource="{Binding Protocols}"
-                                         SelectedItem="{Binding SelectedProtocol}" Height="35"/>
-                            </StackPanel>
-                            <StackPanel Margin="0,0,0,15">
-                                <TextBlock Text="IP Address:" FontWeight="Medium" Margin="0,0,0,5" Foreground="#6A6A6A"/>
-                                <TextBox Classes="neumorphism" Text="{Binding HostAddress}" Height="35"/>
-                            </StackPanel>
-                            <StackPanel Margin="0,0,0,15">
-                                <TextBlock Text="Port:" FontWeight="Medium" Margin="0,0,0,5" Foreground="#6A6A6A"/>
-                                <TextBox Classes="neumorphism" Text="{Binding Port}" Height="35"/>
-                            </StackPanel>
+        <!-- Main Content with Navigation -->
+        <Grid Grid.Row="1" Name="MainGrid">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{Binding Bounds.Width, ElementName=MainGrid, Converter={StaticResource ResponsiveNavRailConverter}}"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Navigation Rail -->
+            <Border Grid.Column="0" Classes="nav-rail" Name="NavRail"
+                    IsVisible="{Binding Bounds.Width, ElementName=MainGrid, Converter={StaticResource ResponsiveNavVisibilityConverter}}">
+                <StackPanel Margin="8,16">
+                    <!-- Dashboard -->
+                    <Border Classes="nav-item selected" Name="DashboardNav">
+                        <StackPanel>
+                            <TextBlock Text="📊" FontSize="24" HorizontalAlignment="Center"/>
+                            <TextBlock Text="ダッシュボード" Classes="label-large" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                         </StackPanel>
-                    </StackPanel>
-                </Border>
+                    </Border>
 
-                <!-- Controls -->
-                <Border Classes="neumorphism" Margin="0,20,0,0">
-                    <StackPanel Margin="20">
-                        <TextBlock x:Name="ControlsTitle" Classes="section" Text="Controls"/>
-                        <WrapPanel Margin="10" HorizontalAlignment="Center" Orientation="Horizontal">
-                            <Button Classes="neumorphism" Content="Start Simulator"
-                                    Command="{Binding StartSimulatorCommand}"
-                                    IsEnabled="{Binding !IsRunning}" MinWidth="120"/>
-                            <Button Classes="neumorphism" Content="Stop Simulator"
-                                    Command="{Binding StopSimulatorCommand}"
-                                    IsEnabled="{Binding IsRunning}" MinWidth="120"/>
-                            <Button Classes="neumorphism" Content="Clear Log"
-                                    Command="{Binding ClearLogCommand}" MinWidth="100"/>
-                        </WrapPanel>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-            </ScrollViewer>
+                    <!-- Simulators -->
+                    <Border Classes="nav-item" Name="SimulatorsNav">
+                        <StackPanel>
+                            <TextBlock Text="⚙️" FontSize="24" HorizontalAlignment="Center"/>
+                            <TextBlock Text="シミュレータ" Classes="label-large" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
 
-            <!-- Log Panel -->
-            <Border x:Name="LogPanel" Grid.Column="1" Classes="neumorphism">
-                <StackPanel Margin="20">
-                    <TextBlock x:Name="LogTitle" Classes="section" Text="Activity Log"/>
-                    <ListBox x:Name="LogListBox" Classes="neumorphism-inset" ItemsSource="{Binding LogMessages}"
-                            Margin="10" MinHeight="200">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="5"
-                                          Foreground="#4A4A4A"/>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                    <!-- Test Data -->
+                    <Border Classes="nav-item" Name="TestDataNav">
+                        <StackPanel>
+                            <TextBlock Text="📝" FontSize="24" HorizontalAlignment="Center"/>
+                            <TextBlock Text="テストデータ" Classes="label-large" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Settings -->
+                    <Border Classes="nav-item" Name="SettingsNav">
+                        <StackPanel>
+                            <TextBlock Text="⚙️" FontSize="24" HorizontalAlignment="Center"/>
+                            <TextBlock Text="設定" Classes="label-large" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Logs -->
+                    <Border Classes="nav-item" Name="LogsNav">
+                        <StackPanel>
+                            <TextBlock Text="📋" FontSize="24" HorizontalAlignment="Center"/>
+                            <TextBlock Text="ログ" Classes="label-large" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Border>
-        </Grid>
 
-        <!-- Footer -->
-        <Border Classes="neumorphism" Grid.Row="2" Margin="0,20,0,0">
-            <TextBlock Text="PLC Unified Simulator - Cross-platform PLC simulation tool"
-                      HorizontalAlignment="Center" Margin="20" Opacity="0.8"
-                      Foreground="#6A6A6A" FontWeight="Medium"/>
-        </Border>
+            <!-- Content Area -->
+            <ScrollViewer Grid.Column="1" Background="{DynamicResource SurfaceBrush}" Name="ContentArea">
+                <StackPanel Margin="{Binding Bounds.Width, ElementName=ContentArea, Converter={StaticResource ResponsiveMarginConverter}}">
+                    <!-- Dashboard Cards - Responsive Layout -->
+                    <ItemsControl Margin="0,0,0,24">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="{Binding Bounds.Width, ElementName=ContentArea, Converter={StaticResource ResponsiveUniformGridConverter}}" 
+                                            HorizontalAlignment="Stretch"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        
+                        <ItemsControl.Items>
+                            <!-- Active Simulators Card -->
+                            <Border Classes="card">
+                                <StackPanel>
+                                    <TextBlock Text="アクティブシミュレータ" Classes="title-medium" Margin="0,0,0,16"/>
+                                    <TextBlock Text="{Binding RunningSimulators.Count}" Classes="display-medium" 
+                                              Foreground="{DynamicResource PrimaryBrush}"/>
+                                    <TextBlock Text="台実行中" Classes="body-medium" 
+                                              Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Available Protocols Card -->
+                            <Border Classes="card">
+                                <StackPanel>
+                                    <TextBlock Text="対応プロトコル" Classes="title-medium" Margin="0,0,0,16"/>
+                                    <TextBlock Text="{Binding AvailablePlcSeries.Count}" Classes="display-medium" 
+                                              Foreground="{DynamicResource SecondaryBrush}"/>
+                                    <TextBlock Text="プロトコル対応" Classes="body-medium" 
+                                              Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- System Status Card -->
+                            <Border Classes="card">
+                                <StackPanel>
+                                    <TextBlock Text="システム状態" Classes="title-medium" Margin="0,0,0,16"/>
+                                    <TextBlock Text="✅" Classes="display-medium"/>
+                                    <TextBlock Text="正常動作中" Classes="body-medium" 
+                                              Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
+                                </StackPanel>
+                            </Border>
+                        </ItemsControl.Items>
+                    </ItemsControl>
+
+                    <!-- Quick Actions -->
+                    <Border Classes="card" Margin="0,0,0,24">
+                        <StackPanel>
+                            <TextBlock Text="クイックアクション" Classes="title-large" Margin="0,0,0,20"/>
+                            <Panel Name="QuickActionsPanel">
+                                <StackPanel Name="HorizontalButtons" 
+                                           Orientation="Horizontal" 
+                                           Spacing="16"
+                                           IsVisible="{Binding Bounds.Width, ElementName=ContentArea, Converter={StaticResource ResponsiveConverter}, ConverterParameter=600}">
+                                    <Button Classes="filled" Content="全シミュレータ開始" Command="{Binding StartAllSimulatorsCommand}"/>
+                                    <Button Classes="tonal" Content="全シミュレータ停止" Command="{Binding StopAllSimulatorsCommand}"/>
+                                    <Button Classes="outlined" Content="テストデータ設定" Command="{Binding SetTestDataCommand}"/>
+                                    <Button Classes="outlined" Content="ログクリア" Command="{Binding ClearLogsCommand}"/>
+                                </StackPanel>
+                                
+                                <StackPanel Name="VerticalButtons" 
+                                           Orientation="Vertical" 
+                                           Spacing="12"
+                                           IsVisible="{Binding !IsVisible, ElementName=HorizontalButtons}">
+                                    <Button Classes="filled" Content="全シミュレータ開始" Command="{Binding StartAllSimulatorsCommand}" HorizontalAlignment="Stretch"/>
+                                    <Button Classes="tonal" Content="全シミュレータ停止" Command="{Binding StopAllSimulatorsCommand}" HorizontalAlignment="Stretch"/>
+                                    <Button Classes="outlined" Content="テストデータ設定" Command="{Binding SetTestDataCommand}" HorizontalAlignment="Stretch"/>
+                                    <Button Classes="outlined" Content="ログクリア" Command="{Binding ClearLogsCommand}" HorizontalAlignment="Stretch"/>
+                                </StackPanel>
+                            </Panel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Running Simulators -->
+                    <Border Classes="card" Margin="0,0,0,24">
+                        <StackPanel>
+                            <TextBlock Text="実行中のシミュレータ" Classes="title-large" Margin="0,0,0,20"/>
+                            
+                            <ListBox ItemsSource="{Binding RunningSimulators}" Classes="modern">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Classes="card" Margin="0,4">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                                <Border Grid.Column="0" Background="{DynamicResource SuccessContainerBrush}" 
+                                                       CornerRadius="12" Width="24" Height="24" Margin="0,0,16,0">
+                                                    <TextBlock Text="●" Classes="label-large" 
+                                                              Foreground="{DynamicResource OnSuccessContainerBrush}" 
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" Classes="title-medium"/>
+                                                    <TextBlock Text="{Binding Protocol}" Classes="body-medium" 
+                                                              Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
+                                                    <TextBlock Text="{Binding EndPoint}" Classes="body-medium" 
+                                                              Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
+                                                </StackPanel>
+                                                
+                                                <TextBlock Grid.Column="2" Text="実行中" Classes="status-success" 
+                                                          VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                                
+                                                <Button Grid.Column="3" Classes="outlined" Content="停止" 
+                                                       VerticalAlignment="Center"
+                                                       Command="{Binding $parent[ListBox].DataContext.StopSelectedSimulatorCommand}"
+                                                       CommandParameter="{Binding}"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            
+                            <TextBlock IsVisible="{Binding !RunningSimulators.Count}" 
+                                      Text="実行中のシミュレータはありません" 
+                                      Classes="body-medium" 
+                                      Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                      HorizontalAlignment="Center" 
+                                      Margin="0,40"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Available Simulators -->
+                    <Border Classes="card" Margin="0,0,0,24">
+                        <StackPanel>
+                            <TextBlock Text="利用可能なシミュレータ" Classes="title-large" Margin="0,0,0,20"/>
+                            
+                            <ItemsControl ItemsSource="{Binding AvailablePlcSeries}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="{Binding Bounds.Width, ElementName=ContentArea, Converter={StaticResource ResponsiveUniformGridConverter}}" 
+                                                    HorizontalAlignment="Stretch"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Classes="card" Margin="8">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" Classes="title-medium" Margin="0,0,0,8"/>
+                                                <TextBlock Text="{Binding Description}" Classes="body-medium" 
+                                                          Foreground="{DynamicResource OnSurfaceVariantBrush}" 
+                                                          Margin="0,0,0,8"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,16">
+                                                    <Border Background="{DynamicResource PrimaryContainerBrush}" 
+                                                           CornerRadius="4" Padding="8,4">
+                                                        <TextBlock Text="{Binding Protocol}" Classes="label-large" 
+                                                                  Foreground="{DynamicResource OnPrimaryContainerBrush}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <Button Classes="tonal" Content="開始" 
+                                                       Command="{Binding $parent[ItemsControl].DataContext.StartSpecificSimulatorCommand}"
+                                                       CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Device Values Monitoring -->
+                    <Border Classes="card">
+                        <StackPanel>
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,20">
+                                <TextBlock Grid.Column="0" Text="デバイス値モニタリング" Classes="title-large"/>
+                                <Button Grid.Column="1" Classes="outlined" Content="更新" 
+                                       Command="{Binding RefreshDeviceValuesCommand}"/>
+                            </Grid>
+                            
+                            <DataGrid ItemsSource="{Binding DeviceValues}" Classes="modern" 
+                                     AutoGenerateColumns="False" IsReadOnly="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="デバイス" Binding="{Binding DeviceAddress}" Width="*"/>
+                                    <DataGridTextColumn Header="値" Binding="{Binding Value}" Width="*"/>
+                                    <DataGridTextColumn Header="タイプ" Binding="{Binding DataType}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </Window>

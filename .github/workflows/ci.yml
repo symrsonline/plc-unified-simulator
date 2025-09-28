@@ -139,6 +139,9 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore PLCUnifiedSimulator.sln
     
+    - name: Format code
+      run: dotnet format PLCUnifiedSimulator.sln --verbosity normal
+    
     - name: Check formatting
       run: dotnet format PLCUnifiedSimulator.sln --verify-no-changes --verbosity normal
     

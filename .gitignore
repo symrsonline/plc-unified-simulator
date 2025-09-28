@@ -20,5 +20,4 @@ api/
 coverage/
 *.yml
 *.yaml
-docfx.json
 filterConfig.yml

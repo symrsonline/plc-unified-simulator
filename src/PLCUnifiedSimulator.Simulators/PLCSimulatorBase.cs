@@ -120,9 +120,14 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
 
     public virtual void SetDeviceValue(PLCAddress address, byte[] value)
     {
+        if (value == null)
+        {
+            throw new ArgumentNullException(nameof(value), "デバイス値にnullは設定できません");
+        }
+
         var key = $"{address.DeviceType}{address.Address}";
         _deviceMemory[key] = value;
-        _logger.LogInformation("デバイス {DeviceKey} に値 {Value} を設定しました", key, value != null ? BitConverter.ToString(value) : "null");
+        _logger.LogInformation("デバイス {DeviceKey} に値 {Value} を設定しました", key, BitConverter.ToString(value));
     }
 
     public virtual byte[]? GetDeviceValue(PLCAddress address)

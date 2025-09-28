@@ -7,27 +7,27 @@ PLC Unified Simulatorは、C#で開発されたPLCシミュレータで、三菱
 ### Core Library (`PLCUnifiedSimulator.Core`)
 PLC通信の基礎となるコアライブラリです。
 
-- [`PLCAddress`](api/PLCUnifiedSimulator.Core.PLCAddress.html) - PLCデバイスのアドレス表現
-- [`PLCData`](api/PLCUnifiedSimulator.Core.PLCData.html) - PLCデータの格納と変換
-- [`IPLCProtocol`](api/PLCUnifiedSimulator.Core.IPLCProtocol.html) - PLCプロトコルのインターフェース
+- [`PLCAddress`](xref:PLCUnifiedSimulator.Core.PLCAddress) - PLCデバイスのアドレス表現
+- [`PLCData`](xref:PLCUnifiedSimulator.Core.PLCData) - PLCデータの格納と変換
+- [`IPLCProtocol`](xref:PLCUnifiedSimulator.Core.IPLCProtocol) - PLCプロトコルのインターフェース
 
 ### Mitsubishi Protocol (`PLCUnifiedSimulator.Protocols.Mitsubishi`)
 三菱PLCとの通信を実装したプロトコルライブラリです。
 
-- [`MitsubishiMCProtocol`](api/PLCUnifiedSimulator.Protocols.Mitsubishi.MitsubishiMCProtocol.html) - MCプロトコル実装
-- [`MitsubishiPLCSeries`](api/PLCUnifiedSimulator.Protocols.Mitsubishi.MitsubishiPLCSeries.html) - サポート機種定義
+- [`MitsubishiMCProtocol`](xref:PLCUnifiedSimulator.Protocols.Mitsubishi.MitsubishiMCProtocol) - MCプロトコル実装
+- [`MitsubishiPLCSeries`](xref:PLCUnifiedSimulator.Protocols.Mitsubishi.MitsubishiPLCSeries) - サポート機種定義
 
 ### Omron Protocol (`PLCUnifiedSimulator.Protocols.Omron`)
 オムロンPLCとの通信を実装したプロトコルライブラリです。
 
-- [`OmronFINSProtocol`](api/PLCUnifiedSimulator.Protocols.Omron.OmronFINSProtocol.html) - FINSプロトコル実装
+- [`OmronFINSProtocol`](xref:PLCUnifiedSimulator.Protocols.Omron.OmronFINSProtocol) - FINSプロトコル実装
 
 ### Simulators (`PLCUnifiedSimulator.Simulators`)
 PLCシミュレータの実装です。
 
-- [`PLCSimulatorBase`](api/PLCUnifiedSimulator.Simulators.PLCSimulatorBase.html) - シミュレータ基底クラス
-- [`MitsubishiMCSimulator`](api/PLCUnifiedSimulator.Simulators.MitsubishiMCSimulator.html) - 三菱MCプロトコルシミュレータ
-- [`OmronFINSSimulator`](api/PLCUnifiedSimulator.Simulators.OmronFINSSimulator.html) - オムロンFINSプロトコルシミュレータ
+- [`PLCSimulatorBase`](xref:PLCUnifiedSimulator.Simulators.PLCSimulatorBase) - シミュレータ基底クラス
+- [`MitsubishiMCSimulator`](xref:PLCUnifiedSimulator.Simulators.MitsubishiMCSimulator) - 三菱MCプロトコルシミュレータ
+- [`OmronFINSSimulator`](xref:PLCUnifiedSimulator.Simulators.OmronFINSSimulator) - オムロンFINSプロトコルシミュレータ
 
 ## 使用方法
 

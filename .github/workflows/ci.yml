@@ -48,7 +48,20 @@ jobs:
       run: dotnet restore PLCUnifiedSimulator.sln
     
     - name: Build
-      run: dotnet build PLCUnifiedSimulator.sln --no-restore --configuration Release
+      run: |
+        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          echo "Building on Ubuntu - excluding GUI project"
+          # Build all projects except GUI
+          dotnet build src/PLCUnifiedSimulator.Core/PLCUnifiedSimulator.Core.csproj --no-restore --configuration Release
+          dotnet build src/PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj --no-restore --configuration Release
+          dotnet build src/PLCUnifiedSimulator.Protocols.Mitsubishi/PLCUnifiedSimulator.Protocols.Mitsubishi.csproj --no-restore --configuration Release
+          dotnet build src/PLCUnifiedSimulator.Protocols.Omron/PLCUnifiedSimulator.Protocols.Omron.csproj --no-restore --configuration Release
+          dotnet build src/PLCUnifiedSimulator.Simulators/PLCUnifiedSimulator.Simulators.csproj --no-restore --configuration Release
+          dotnet build tests/PLCUnifiedSimulator.Tests/PLCUnifiedSimulator.Tests.csproj --no-restore --configuration Release
+        else
+          echo "Building on Windows - including all projects"
+          dotnet build PLCUnifiedSimulator.sln --no-restore --configuration Release
+        fi
     
     - name: Run tests
       run: dotnet test PLCUnifiedSimulator.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage --blame --blame-hang-timeout 5m
@@ -81,7 +94,13 @@ jobs:
       run: dotnet restore PLCUnifiedSimulator.sln
     
     - name: Build Release
-      run: dotnet build PLCUnifiedSimulator.sln --configuration Release --no-restore
+      run: |
+        # Build all projects except GUI
+        dotnet build src/PLCUnifiedSimulator.Core/PLCUnifiedSimulator.Core.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Mitsubishi/PLCUnifiedSimulator.Protocols.Mitsubishi.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Omron/PLCUnifiedSimulator.Protocols.Omron.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Simulators/PLCUnifiedSimulator.Simulators.csproj --configuration Release --no-restore
     
     - name: Publish Console Application
       run: |
@@ -123,7 +142,13 @@ jobs:
         languages: csharp
     
     - name: Build for CodeQL Analysis
-      run: dotnet build PLCUnifiedSimulator.sln --configuration Release --no-restore
+      run: |
+        # Build all projects except GUI
+        dotnet build src/PLCUnifiedSimulator.Core/PLCUnifiedSimulator.Core.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Mitsubishi/PLCUnifiedSimulator.Protocols.Mitsubishi.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Omron/PLCUnifiedSimulator.Protocols.Omron.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Simulators/PLCUnifiedSimulator.Simulators.csproj --configuration Release --no-restore
     
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
@@ -154,7 +179,12 @@ jobs:
     
     - name: Run static analysis (if enabled)
       run: |
-        dotnet build PLCUnifiedSimulator.sln --configuration Release --verbosity normal
+        # Build all projects except GUI
+        dotnet build src/PLCUnifiedSimulator.Core/PLCUnifiedSimulator.Core.csproj --configuration Release --verbosity normal --no-restore
+        dotnet build src/PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj --configuration Release --verbosity normal --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Mitsubishi/PLCUnifiedSimulator.Protocols.Mitsubishi.csproj --configuration Release --verbosity normal --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Omron/PLCUnifiedSimulator.Protocols.Omron.csproj --configuration Release --verbosity normal --no-restore
+        dotnet build src/PLCUnifiedSimulator.Simulators/PLCUnifiedSimulator.Simulators.csproj --configuration Release --verbosity normal --no-restore
       continue-on-error: true
 
   performance:
@@ -175,7 +205,13 @@ jobs:
       run: dotnet restore PLCUnifiedSimulator.sln
     
     - name: Build
-      run: dotnet build PLCUnifiedSimulator.sln --configuration Release --no-restore
+      run: |
+        # Build all projects except GUI
+        dotnet build src/PLCUnifiedSimulator.Core/PLCUnifiedSimulator.Core.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Mitsubishi/PLCUnifiedSimulator.Protocols.Mitsubishi.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Omron/PLCUnifiedSimulator.Protocols.Omron.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Simulators/PLCUnifiedSimulator.Simulators.csproj --configuration Release --no-restore
     
     - name: Run Performance Tests
       run: |
@@ -202,7 +238,13 @@ jobs:
       run: dotnet restore PLCUnifiedSimulator.sln
     
     - name: Build
-      run: dotnet build PLCUnifiedSimulator.sln --configuration Release --no-restore
+      run: |
+        # Build all projects except GUI
+        dotnet build src/PLCUnifiedSimulator.Core/PLCUnifiedSimulator.Core.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Mitsubishi/PLCUnifiedSimulator.Protocols.Mitsubishi.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Omron/PLCUnifiedSimulator.Protocols.Omron.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Simulators/PLCUnifiedSimulator.Simulators.csproj --configuration Release --no-restore
     
     - name: Integration Test
       run: |
@@ -232,7 +274,13 @@ jobs:
       run: dotnet restore PLCUnifiedSimulator.sln
     
     - name: Build projects
-      run: dotnet build PLCUnifiedSimulator.sln --configuration Release --no-restore
+      run: |
+        # Build all projects except GUI for documentation generation
+        dotnet build src/PLCUnifiedSimulator.Core/PLCUnifiedSimulator.Core.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Mitsubishi/PLCUnifiedSimulator.Protocols.Mitsubishi.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Protocols.Omron/PLCUnifiedSimulator.Protocols.Omron.csproj --configuration Release --no-restore
+        dotnet build src/PLCUnifiedSimulator.Simulators/PLCUnifiedSimulator.Simulators.csproj --configuration Release --no-restore
     
     - name: Generate API documentation
       run: |

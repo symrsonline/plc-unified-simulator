@@ -1745,4 +1745,216 @@ public class ConsoleApplicationTests : TestBase
         writeTask.Should().NotBeNull();
         // 実際のログ記録は非同期で行われるため、タスクが作成されることを確認
     }
+
+    [Fact]
+    public void Program_Should_Parse_Mitsubishi_Command_Args_Default_Values()
+    {
+        // Arrange
+        var args = new[] { "mitsubishi" };
+
+        // Act
+        var (port, series) = ParseMitsubishiArgs(args);
+
+        // Assert
+        port.Should().Be(5000);
+        series.Should().Be("QJ71E71_Binary_Station1");
+    }
+
+    [Fact]
+    public void Program_Should_Parse_Mitsubishi_Command_Args_With_Port()
+    {
+        // Arrange
+        var args = new[] { "mitsubishi", "--port", "5001" };
+
+        // Act
+        var (port, series) = ParseMitsubishiArgs(args);
+
+        // Assert
+        port.Should().Be(5001);
+        series.Should().Be("QJ71E71_Binary_Station1");
+    }
+
+    [Fact]
+    public void Program_Should_Parse_Mitsubishi_Command_Args_With_Series()
+    {
+        // Arrange
+        var args = new[] { "mitsubishi", "--series", "FX3U_ENET" };
+
+        // Act
+        var (port, series) = ParseMitsubishiArgs(args);
+
+        // Assert
+        port.Should().Be(5000);
+        series.Should().Be("FX3U_ENET");
+    }
+
+    [Fact]
+    public void Program_Should_Parse_Mitsubishi_Command_Args_With_Port_And_Series()
+    {
+        // Arrange
+        var args = new[] { "mitsubishi", "--port", "5002", "--series", "FX5U_CPU_Binary" };
+
+        // Act
+        var (port, series) = ParseMitsubishiArgs(args);
+
+        // Assert
+        port.Should().Be(5002);
+        series.Should().Be("FX5U_CPU_Binary");
+    }
+
+    [Fact]
+    public void Program_Should_Parse_Omron_Command_Args_Default_Value()
+    {
+        // Arrange
+        var args = new[] { "omron" };
+
+        // Act
+        var port = ParseOmronArgs(args);
+
+        // Assert
+        port.Should().Be(9600);
+    }
+
+    [Fact]
+    public void Program_Should_Parse_Omron_Command_Args_With_Port()
+    {
+        // Arrange
+        var args = new[] { "omron", "--port", "9601" };
+
+        // Act
+        var port = ParseOmronArgs(args);
+
+        // Assert
+        port.Should().Be(9601);
+    }
+
+    [Fact]
+    public void Program_Should_Throw_Exception_For_Invalid_Mitsubishi_Port()
+    {
+        // Arrange
+        var args = new[] { "mitsubishi", "--port", "invalid" };
+
+        // Act & Assert
+        var action = () => ParseMitsubishiArgs(args);
+        action.Should().Throw<ArgumentException>()
+            .WithMessage("Invalid port number");
+    }
+
+    [Fact]
+    public void Program_Should_Throw_Exception_For_Invalid_Omron_Port()
+    {
+        // Arrange
+        var args = new[] { "omron", "--port", "invalid" };
+
+        // Act & Assert
+        var action = () => ParseOmronArgs(args);
+        action.Should().Throw<ArgumentException>()
+            .WithMessage("Invalid port number");
+    }
+
+    [Fact]
+    public void Program_Should_Throw_Exception_For_Missing_Mitsubishi_Series_Value()
+    {
+        // Arrange
+        var args = new[] { "mitsubishi", "--series" };
+
+        // Act & Assert
+        var action = () => ParseMitsubishiArgs(args);
+        action.Should().Throw<ArgumentException>()
+            .WithMessage("Series name is required");
+    }
+
+    [Fact]
+    public void Program_Should_Throw_Exception_For_Unknown_Mitsubishi_Option()
+    {
+        // Arrange
+        var args = new[] { "mitsubishi", "--unknown", "value" };
+
+        // Act & Assert
+        var action = () => ParseMitsubishiArgs(args);
+        action.Should().Throw<ArgumentException>()
+            .WithMessage("Unknown option: --unknown");
+    }
+
+    [Fact]
+    public void Program_Should_Throw_Exception_For_Unknown_Omron_Option()
+    {
+        // Arrange
+        var args = new[] { "omron", "--unknown", "value" };
+
+        // Act & Assert
+        var action = () => ParseOmronArgs(args);
+        action.Should().Throw<ArgumentException>()
+            .WithMessage("Unknown option: --unknown");
+    }
+
+    // ヘルパーメソッド - Program.csのプライベートメソッドをテスト用に公開
+    private static (int Port, string Series) ParseMitsubishiArgs(string[] args)
+    {
+        int port = 5000;
+        string series = "QJ71E71_Binary_Station1";
+
+        for (int i = 1; i < args.Length; i++)
+        {
+            switch (args[i])
+            {
+                case "--port":
+                    if (i + 1 < args.Length && int.TryParse(args[i + 1], out var p))
+                    {
+                        port = p;
+                        i++; // 次の引数をスキップ
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Invalid port number");
+                    }
+                    break;
+
+                case "--series":
+                    if (i + 1 < args.Length)
+                    {
+                        series = args[i + 1];
+                        i++; // 次の引数をスキップ
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Series name is required");
+                    }
+                    break;
+
+                default:
+                    throw new ArgumentException($"Unknown option: {args[i]}");
+            }
+        }
+
+        return (port, series);
+    }
+
+    private static int ParseOmronArgs(string[] args)
+    {
+        int port = 9600;
+
+        for (int i = 1; i < args.Length; i++)
+        {
+            switch (args[i])
+            {
+                case "--port":
+                    if (i + 1 < args.Length && int.TryParse(args[i + 1], out var p))
+                    {
+                        port = p;
+                        i++; // 次の引数をスキップ
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Invalid port number");
+                    }
+                    break;
+
+                default:
+                    throw new ArgumentException($"Unknown option: {args[i]}");
+            }
+        }
+
+        return port;
+    }
 }

@@ -21,7 +21,10 @@
           "**/*.{md,yml}"
         ],
         "exclude": [
-          "_site/**"
+          "_site/**",
+          "docker-compose.yml",
+          "docker-compose.dev.yml",
+          "filterConfig.yml"
         ]
       }
     ],

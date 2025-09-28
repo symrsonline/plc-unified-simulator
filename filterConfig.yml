@@ -1,3 +1,4 @@
+### YamlMime:ManagedReferenceFilterConfig
 apiRules:
 - exclude:
     uidRegex: ^System\.|^Microsoft\.|^Newtonsoft\.|^Xunit\.|^FluentAssertions\.

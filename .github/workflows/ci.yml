@@ -48,20 +48,7 @@ jobs:
       run: dotnet restore PLCUnifiedSimulator.sln
     
     - name: Build
-      run: |
-        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-          echo "Building on Ubuntu - excluding GUI project"
-          # Build all projects except GUI
-          dotnet build src/PLCUnifiedSimulator.Core/PLCUnifiedSimulator.Core.csproj --no-restore --configuration Release
-          dotnet build src/PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj --no-restore --configuration Release
-          dotnet build src/PLCUnifiedSimulator.Protocols.Mitsubishi/PLCUnifiedSimulator.Protocols.Mitsubishi.csproj --no-restore --configuration Release
-          dotnet build src/PLCUnifiedSimulator.Protocols.Omron/PLCUnifiedSimulator.Protocols.Omron.csproj --no-restore --configuration Release
-          dotnet build src/PLCUnifiedSimulator.Simulators/PLCUnifiedSimulator.Simulators.csproj --no-restore --configuration Release
-          dotnet build tests/PLCUnifiedSimulator.Tests/PLCUnifiedSimulator.Tests.csproj --no-restore --configuration Release
-        else
-          echo "Building on Windows - including all projects"
-          dotnet build PLCUnifiedSimulator.sln --no-restore --configuration Release
-        fi
+      run: dotnet build PLCUnifiedSimulator.sln --no-restore --configuration Release
     
     - name: Run tests
       run: dotnet test PLCUnifiedSimulator.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage --blame --blame-hang-timeout 5m

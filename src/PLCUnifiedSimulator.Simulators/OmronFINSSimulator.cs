@@ -224,13 +224,24 @@ public class OmronFINSSimulator : PLCSimulatorBase
     {
         return memoryAreaCode switch
         {
-            0x82 => "D",   // DM領域
-            0x89 => "C",   // CIO領域
-            0x31 => "W",   // WR領域
-            0x32 => "H",   // HR領域
-            0x33 => "A",   // AR領域
-            0x09 => "T",   // タイマ
-            _ => "D"       // デフォルト
+            0xb0 => "IO",   // 入出力リレー(チャネルI/O)
+            0xb1 => "WR",   // 内部補助リレー
+            0xb2 => "HR",   // 保持リレー
+            0xb3 => "AR",   // 補助記憶リレー
+            0x09 => "TS",   // タイマアップフラグ/カウンタアップフラグ
+            0x89 => "TN",   // タイマ現在値/カウンタ現在値
+            0x82 => "DM",   // データメモリ
+            0x98 => "EM",   // 拡張メモリ(カレント)
+            0xa0 => "EB",   // 拡張メモリ(バンク指定)
+            0x06 => "TKB",  // タスクフラグ(ビット)
+            0x46 => "TKS",  // タスクフラグ(ステータス)
+            0xdc => "IR",   // インデックスレジスタ
+            0xbc => "DR",   // データレジスタ
+            // 後方互換性のため
+            0x31 => "W",    // WR領域
+            0x32 => "H",    // HR領域
+            0x33 => "A",    // AR領域
+            _ => "DM"        // デフォルト
         };
     }
 
@@ -402,6 +413,35 @@ public class OmronFINSSimulator : PLCSimulatorBase
             0x00,                   // SID
             mainResponseCode,       // MRC
             subResponseCode         // SRC
+        };
+    }
+
+    /// <summary>
+    /// サポートされているデバイスの一覧を取得
+    /// </summary>
+    public IReadOnlyDictionary<string, byte> GetSupportedDevices()
+    {
+        return new Dictionary<string, byte>
+        {
+            ["IO"] = 0xb0,   // 入出力リレー(チャネルI/O)
+            ["WR"] = 0xb1,   // 内部補助リレー
+            ["HR"] = 0xb2,   // 保持リレー
+            ["AR"] = 0xb3,   // 補助記憶リレー
+            ["TS"] = 0x09,   // タイマアップフラグ/カウンタアップフラグ
+            ["CS"] = 0x09,   // タイマアップフラグ/カウンタアップフラグ (TSと同じ)
+            ["TN"] = 0x89,   // タイマ現在値/カウンタ現在値
+            ["CN"] = 0x89,   // タイマ現在値/カウンタ現在値 (TNと同じ)
+            ["DM"] = 0x82,   // データメモリ
+            ["EM"] = 0x98,   // 拡張メモリ(カレント)
+            ["EB"] = 0xa0,   // 拡張メモリ(バンク指定)
+            ["TKB"] = 0x06,  // タスクフラグ(ビット)
+            ["TKS"] = 0x46,  // タスクフラグ(ステータス)
+            ["IR"] = 0xdc,   // インデックスレジスタ
+            ["DR"] = 0xbc,   // データレジスタ
+            ["W"] = 0x31,    // WR領域 (標準デバイス)
+            ["H"] = 0x32,    // HR領域 (標準デバイス)
+            ["A"] = 0x33,    // AR領域 (標準デバイス)
+            ["C"] = 0x09     // カウンタ (TS/CSと同じ、標準デバイス)
         };
     }
 }

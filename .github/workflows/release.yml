@@ -60,15 +60,6 @@ jobs:
           --output ./release/linux-x64 \
           -p:PublishSingleFile=true \
           -p:PublishTrimmed=true
-        
-        # macOS x64
-        dotnet publish src/PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj \
-          --configuration Release \
-          --runtime osx-x64 \
-          --self-contained true \
-          --output ./release/osx-x64 \
-          -p:PublishSingleFile=true \
-          -p:PublishTrimmed=true
     
     - name: Create archives
       run: |
@@ -79,9 +70,6 @@ jobs:
         
         # Linux
         tar -czf plc-unified-simulator-linux-x64.tar.gz linux-x64/
-        
-        # macOS
-        tar -czf plc-unified-simulator-osx-x64.tar.gz osx-x64/
         
         # Framework-dependent
         dotnet publish ../src/PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj \
@@ -98,7 +86,6 @@ jobs:
         files: |
           ./release/plc-unified-simulator-win-x64.zip
           ./release/plc-unified-simulator-linux-x64.tar.gz
-          ./release/plc-unified-simulator-osx-x64.tar.gz
           ./release/plc-unified-simulator-framework-dependent.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

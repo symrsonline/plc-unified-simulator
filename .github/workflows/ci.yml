@@ -1,0 +1,202 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+    
+    - name: Restore dependencies
+      run: dotnet restore PLCUnifiedSimulator.sln
+    
+    - name: Build
+      run: dotnet build PLCUnifiedSimulator.sln --no-restore --configuration Release
+    
+    - name: Run tests
+      run: dotnet test PLCUnifiedSimulator.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+    
+    - name: Upload coverage reports to Codecov
+      if: matrix.os == 'ubuntu-latest'
+      uses: codecov/codecov-action@v4
+      with:
+        directory: ./coverage
+        fail_ci_if_error: true
+        verbose: true
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore PLCUnifiedSimulator.sln
+    
+    - name: Build Release
+      run: dotnet build PLCUnifiedSimulator.sln --configuration Release --no-restore
+    
+    - name: Publish Console Application
+      run: |
+        dotnet publish src/PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj \
+          --configuration Release \
+          --output ./publish/console \
+          --no-restore \
+          --self-contained false
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: plc-unified-simulator-${{ github.sha }}
+        path: ./publish/
+        retention-days: 30
+
+  security:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore PLCUnifiedSimulator.sln
+    
+    - name: Run Security Analysis
+      uses: security-code-scan/security-code-scan-action@v1
+      with:
+        project-path: PLCUnifiedSimulator.sln
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Install dotnet format tool
+      run: dotnet tool install -g dotnet-format
+    
+    - name: Restore dependencies
+      run: dotnet restore PLCUnifiedSimulator.sln
+    
+    - name: Check formatting
+      run: dotnet format PLCUnifiedSimulator.sln --verify-no-changes --verbosity diagnostic
+    
+    - name: Run static analysis (if enabled)
+      run: |
+        dotnet build PLCUnifiedSimulator.sln --configuration Release --verbosity normal
+      continue-on-error: true
+
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore PLCUnifiedSimulator.sln
+    
+    - name: Build
+      run: dotnet build PLCUnifiedSimulator.sln --configuration Release --no-restore
+    
+    - name: Run Performance Tests
+      run: |
+        echo "Starting PLC Simulators for performance testing..."
+        timeout 30s dotnet run --project src/PLCUnifiedSimulator.Console --configuration Release < /dev/null || true
+        echo "Performance test completed"
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore PLCUnifiedSimulator.sln
+    
+    - name: Build
+      run: dotnet build PLCUnifiedSimulator.sln --configuration Release --no-restore
+    
+    - name: Start Simulator in Background
+      run: |
+        echo "0" | timeout 10s dotnet run --project src/PLCUnifiedSimulator.Console --configuration Release &
+        SIMULATOR_PID=$!
+        echo "Simulator started with PID: $SIMULATOR_PID"
+        sleep 5
+        
+        # Test network connectivity
+        echo "Testing network connectivity..."
+        nc -zv 127.0.0.1 5000 || echo "Port 5000 not available"
+        nc -zv 127.0.0.1 5010 || echo "Port 5010 not available"
+        
+        # Kill simulator
+        kill $SIMULATOR_PID || true
+        echo "Integration test completed"

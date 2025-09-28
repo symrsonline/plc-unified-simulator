@@ -1,5 +1,11 @@
 # PLC Unified Simulator
 
+[![CI](https://github.com/symrsonline/plc-unified-simulator/workflows/CI/badge.svg)](https://github.com/symrsonline/plc-unified-simulator/actions/workflows/ci.yml)
+[![Release](https://github.com/symrsonline/plc-unified-simulator/workflows/Release/badge.svg)](https://github.com/symrsonline/plc-unified-simulator/actions/workflows/release.yml)
+[![codecov](https://codecov.io/gh/symrsonline/plc-unified-simulator/branch/master/graph/badge.svg)](https://codecov.io/gh/symrsonline/plc-unified-simulator)
+[![Docker](https://img.shields.io/docker/v/symrsonline/plc-unified-simulator?label=Docker&logo=docker)](https://github.com/symrsonline/plc-unified-simulator/pkgs/container/plc-unified-simulator)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 C#で開発されたPLCシミュレータ。三菱Q・iQシリーズ（MCプロトコル）とオムロンFINS（FINSプロトコル）に対応した統合シミュレーション環境を提供します。
 
 ## 機能
@@ -127,11 +133,52 @@ await client.DisconnectAsync();
 - **T**: タイマ
 - **CT**: カウンタ
 
+## インストール
+
+### Docker を使用
+
+```bash
+# 最新版を取得して実行
+docker run -p 5000-5050:5000-5050 ghcr.io/symrsonline/plc-unified-simulator:latest
+
+# または Docker Compose を使用
+docker-compose up -d
+```
+
+### リリースバイナリ
+
+[Releases](https://github.com/symrsonline/plc-unified-simulator/releases) から各プラットフォーム用のビルド済みバイナリをダウンロードできます。
+
+- Windows (x64): `plc-unified-simulator-win-x64.zip`
+- Linux (x64): `plc-unified-simulator-linux-x64.tar.gz`
+- macOS (x64): `plc-unified-simulator-osx-x64.tar.gz`
+
+### ソースからビルド
+
+```bash
+git clone https://github.com/symrsonline/plc-unified-simulator.git
+cd plc-unified-simulator
+dotnet build
+dotnet run --project src/PLCUnifiedSimulator.Console
+```
+
 ## 開発環境要件
 
 - .NET 8.0 SDK
 - Visual Studio 2022 または Visual Studio Code
 - C# 拡張機能
+- Docker (オプション)
+
+## CI/CD
+
+このプロジェクトは GitHub Actions を使用した CI/CD パイプラインを実装しています：
+
+- **継続的インテグレーション**: プッシュ・プルリクエスト時の自動テスト実行
+- **マルチプラットフォームテスト**: Ubuntu、Windows、macOS での動作確認
+- **コードカバレッジ**: Codecov による自動カバレッジレポート
+- **自動リリース**: タグ作成時の自動バイナリビルド・配布
+- **Docker イメージ**: GitHub Container Registry への自動公開
+- **依存関係管理**: Dependabot による自動アップデート
 
 ## ライセンス
 

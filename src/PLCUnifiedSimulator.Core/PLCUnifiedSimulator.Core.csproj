@@ -4,6 +4,31 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
+    <!-- Package Information -->
+    <PackageId>PLCUnifiedSimulator.Core</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>PLCUnifiedSimulator</Authors>
+    <Company>PLCUnifiedSimulator</Company>
+    <Product>PLC Unified Simulator</Product>
+    <Description>Core library for PLC Unified Simulator - Multi-protocol PLC simulator supporting Mitsubishi and Omron protocols</Description>
+    <PackageTags>PLC;Simulator;Mitsubishi;Omron;MC;FINS;Industrial;Automation</PackageTags>
+    <RepositoryUrl>https://github.com/symrsonline/plc-unified-simulator</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    
+    <!-- Source Link -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
+  </ItemGroup>
 
 </Project>

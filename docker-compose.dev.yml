@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  plc-simulator-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: plc-unified-simulator:dev
+    container_name: plc-unified-simulator-dev
+    restart: "no"
+    ports:
+      # All PLC simulator ports
+      - "5000-5002:5000-5002"
+      - "5010-5012:5010-5012"
+      - "5020-5021:5020-5021"
+      - "5030-5031:5030-5031"
+      - "5040:5040"
+      - "5050:5050"
+    volumes:
+      - .:/src
+      - /src/bin
+      - /src/obj
+    working_dir: /src
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - DOTNET_USE_POLLING_FILE_WATCHER=true
+      - ASPNETCORE_LOGGING__CONSOLE__DISABLECOLORS=false
+    command: dotnet watch run --project src/PLCUnifiedSimulator.Console
+    networks:
+      - plc-dev-network
+    stdin_open: true
+    tty: true
+
+networks:
+  plc-dev-network:
+    driver: bridge

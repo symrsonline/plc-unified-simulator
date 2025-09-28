@@ -1,38 +1,37 @@
-# .NET Code Coverage Settings
-# This file configures code coverage collection for the project
-
-# Coverage collection settings
-<Configuration>
-  <DataCollectors>
-    <DataCollector friendlyName="XPlat code coverage">
-      <Configuration>
-        <Format>cobertura</Format>
-        <Exclude>
-          <!-- Exclude test projects -->
-          [*Tests*]*
-          [*Test*]*
-          <!-- Exclude Program.cs and other entry points -->
-          [*.Console]Program
-          [*.Console]*.Program
-          <!-- Exclude generated code -->
-          [*]*Generated*
-          [*]*Designer*
-        </Exclude>
-        <ExcludeByAttribute>
-          <Attribute>Obsolete</Attribute>
-          <Attribute>GeneratedCodeAttribute</Attribute>
-          <Attribute>CompilerGeneratedAttribute</Attribute>
-        </ExcludeByAttribute>
-        <ExcludeByFile>
-          <!-- Exclude specific files -->
-          <File>**/Program.cs</File>
-          <File>**/*Designer.cs</File>
-          <File>**/*.Generated.cs</File>
-        </ExcludeByFile>
-        <IncludeDirectory>
-          <Directory>src</Directory>
-        </IncludeDirectory>
-      </Configuration>
-    </DataCollector>
-  </DataCollectors>
-</Configuration>
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Exclude>
+            <!-- Exclude test projects -->
+            [*Tests*]*
+            [*Test*]*
+            <!-- Exclude Program.cs and other entry points -->
+            [*.Console]Program
+            [*.Console]*.Program
+            <!-- Exclude generated code -->
+            [*]*Generated*
+            [*]*Designer*
+          </Exclude>
+          <ExcludeByAttribute>
+            <Attribute>Obsolete</Attribute>
+            <Attribute>GeneratedCodeAttribute</Attribute>
+            <Attribute>CompilerGeneratedAttribute</Attribute>
+          </ExcludeByAttribute>
+          <ExcludeByFile>
+            <!-- Exclude specific files -->
+            <File>**/Program.cs</File>
+            <File>**/*Designer.cs</File>
+            <File>**/*.Generated.cs</File>
+          </ExcludeByFile>
+          <IncludeDirectory>
+            <Directory>src</Directory>
+          </IncludeDirectory>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

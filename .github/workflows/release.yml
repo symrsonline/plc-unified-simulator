@@ -90,14 +90,15 @@ jobs:
     
     - name: Upload Release Assets
       if: github.event_name == 'release'
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ./release/plc-unified-simulator-win-x64.zip
+          ./release/plc-unified-simulator-linux-x64.tar.gz
+          ./release/plc-unified-simulator-osx-x64.tar.gz
+          ./release/plc-unified-simulator-framework-dependent.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./release/plc-unified-simulator-win-x64.zip
-        asset_name: plc-unified-simulator-win-x64.zip
-        asset_content_type: application/zip
     
     - name: Upload all artifacts
       uses: actions/upload-artifact@v4

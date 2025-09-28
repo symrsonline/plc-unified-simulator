@@ -18,11 +18,11 @@
     "content": [
       {
         "files": [
-          "api/**/*.yml",
           "**/*.{md,yml}"
         ],
         "exclude": [
           "_site/**",
+          "api/**",
           "docker-compose.yml",
           "docker-compose.dev.yml",
           "filterConfig.yml"
@@ -38,11 +38,10 @@
     ],
     "output": "api-docs",
     "template": [
-      "default",
       "modern"
     ],
     "globalMetadata": {
-      "_appName": "PLC Unified Simulator",
+      "_appName": "PLC Unified Simulator API Reference",
       "_appTitle": "PLC Unified Simulator API Reference",
       "_appFooter": "© 2025 PLC Unified Simulator. Licensed under MIT.",
       "_enableSearch": true,

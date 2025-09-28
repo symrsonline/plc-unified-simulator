@@ -255,7 +255,7 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
     - name: Setup DocFX
-      run: dotnet tool install -g docfx
+      run: dotnet tool install -g docfx --version 2.75.2
     
     - name: Restore dependencies
       run: dotnet restore PLCUnifiedSimulator.sln
@@ -275,10 +275,14 @@ jobs:
         docfx metadata docfx.json
         echo "Metadata generation completed. Checking generated files..."
         ls -la api/ || echo "api directory not found"
+        find api/ -name "*.yml" | head -5 || echo "No YML files found in api/"
         docfx build docfx.json
         echo "Build completed. Checking output..."
         ls -la api-docs/ || echo "api-docs directory not found"
         find api-docs/ -name "*.html" | head -5 || echo "No HTML files found"
+        find api-docs/ -name "*.json" | head -5 || echo "JSON files found:"
+        echo "Checking index.html..."
+        head -20 api-docs/index.html || echo "index.html not found or empty"
     
     - name: Setup Pages
       uses: actions/configure-pages@v4

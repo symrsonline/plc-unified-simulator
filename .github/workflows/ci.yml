@@ -15,10 +15,12 @@ jobs:
   test:
     name: Test
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+      max-parallel: 1
     
     steps:
     - name: Checkout code
@@ -44,7 +46,7 @@ jobs:
       run: dotnet build PLCUnifiedSimulator.sln --no-restore --configuration Release
     
     - name: Run tests
-      run: dotnet test PLCUnifiedSimulator.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+      run: dotnet test PLCUnifiedSimulator.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage --blame --blame-hang-timeout 5m
     
     - name: Upload coverage reports to Codecov
       if: matrix.os == 'ubuntu-latest'

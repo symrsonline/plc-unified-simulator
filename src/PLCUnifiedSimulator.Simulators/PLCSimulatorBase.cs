@@ -122,7 +122,7 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
     {
         var key = $"{address.DeviceType}{address.Address}";
         _deviceMemory[key] = value;
-        _logger.LogInformation("デバイス {DeviceKey} に値 {Value} を設定しました", key, BitConverter.ToString(value));
+        _logger.LogInformation("デバイス {DeviceKey} に値 {Value} を設定しました", key, value != null ? BitConverter.ToString(value) : "null");
     }
 
     public virtual byte[]? GetDeviceValue(PLCAddress address)
@@ -130,7 +130,7 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
         var key = $"{address.DeviceType}{address.Address}";
         if (_deviceMemory.TryGetValue(key, out var value))
         {
-            _logger.LogDebug("デバイス {DeviceKey} の値を取得しました: {Value}", key, BitConverter.ToString(value));
+            _logger.LogDebug("デバイス {DeviceKey} の値を取得しました: {Value}", key, value != null ? BitConverter.ToString(value) : "null");
             return value;
         }
         _logger.LogDebug("デバイス {DeviceKey} の値が見つかりません", key);

@@ -71,6 +71,9 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
         try
         {
+            // デバイスアクセス前の検証
+            ValidateDeviceAccess(address);
+
             var request = CreateReadRequest(address);
             await _stream.WriteAsync(request, cancellationToken);
 
@@ -85,6 +88,16 @@ public class MitsubishiMCProtocol : PLCProtocolBase
             
             return null;
         }
+        catch (NotSupportedException)
+        {
+            // 未サポートデバイスの例外は再スロー
+            throw;
+        }
+        catch (ArgumentException)
+        {
+            // 引数エラーの例外は再スロー
+            throw;
+        }
         catch
         {
             return null;
@@ -98,6 +111,9 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
         try
         {
+            // デバイスアクセス前の検証
+            ValidateDeviceAccess(address);
+
             var request = CreateWriteRequest(address, data);
             await _stream.WriteAsync(request, cancellationToken);
 
@@ -105,6 +121,16 @@ public class MitsubishiMCProtocol : PLCProtocolBase
             var bytesRead = await _stream.ReadAsync(response, cancellationToken);
             
             return IsValidResponse(response, bytesRead);
+        }
+        catch (NotSupportedException)
+        {
+            // 未サポートデバイスの例外は再スロー
+            throw;
+        }
+        catch (ArgumentException)
+        {
+            // 引数エラーの例外は再スロー
+            throw;
         }
         catch
         {
@@ -272,15 +298,52 @@ public class MitsubishiMCProtocol : PLCProtocolBase
             return (device.Code, upperDeviceType);
         }
         
-        // フォールバック
-        return upperDeviceType switch
+        // サポートされていないデバイスの場合は例外をスロー
+        throw new NotSupportedException(
+            $"デバイス '{deviceType}' は {_seriesInfo.Description} でサポートされていません。" +
+            $"サポートされているデバイス: {string.Join(", ", _seriesInfo.SupportedDevices.Keys)}");
+    }
+
+    /// <summary>
+    /// 指定されたデバイスタイプがサポートされているかチェック
+    /// </summary>
+    /// <param name="deviceType">デバイスタイプ</param>
+    /// <returns>サポートされている場合はtrue</returns>
+    public bool IsDeviceSupported(string deviceType)
+    {
+        var upperDeviceType = deviceType.ToUpper();
+        return _seriesInfo.SupportedDevices.ContainsKey(upperDeviceType);
+    }
+
+    /// <summary>
+    /// デバイスアクセス前の検証を実行
+    /// </summary>
+    /// <param name="address">PLCアドレス</param>
+    /// <exception cref="NotSupportedException">未サポートデバイスの場合</exception>
+    /// <exception cref="ArgumentException">無効なアドレスの場合</exception>
+    private void ValidateDeviceAccess(PLCAddress address)
+    {
+        if (string.IsNullOrEmpty(address.DeviceType))
         {
-            "D" => (0xA8, "データレジスタ"),
-            "X" => (0x9C, "入力リレー"),
-            "Y" => (0x9D, "出力リレー"),
-            "M" => (0x90, "内部リレー"),
-            _ => (0x90, "不明")
-        };
+            throw new ArgumentException("デバイスタイプが指定されていません", nameof(address));
+        }
+
+        if (!IsDeviceSupported(address.DeviceType))
+        {
+            throw new NotSupportedException(
+                $"デバイス '{address.DeviceType}' は {_seriesInfo.Description} でサポートされていません。" +
+                $"サポートされているデバイス: {string.Join(", ", _seriesInfo.SupportedDevices.Keys)}");
+        }
+
+        if (address.Address < 0)
+        {
+            throw new ArgumentException("デバイスアドレスは0以上である必要があります", nameof(address));
+        }
+
+        if (address.Size <= 0)
+        {
+            throw new ArgumentException("アクセスサイズは1以上である必要があります", nameof(address));
+        }
     }
 
     /// <summary>

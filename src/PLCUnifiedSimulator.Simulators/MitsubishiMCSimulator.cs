@@ -103,6 +103,14 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
             var deviceCount = BitConverter.ToUInt16(request, 23);
 
             var deviceType = GetDeviceTypeFromCode(deviceCode);
+            
+            // サポートされていないデバイスの場合はエラーを返す
+            if (deviceType == null)
+            {
+                Console.WriteLine($"未サポートデバイスコード: 0x{deviceCode:X2} ({_seriesInfo.Description})");
+                return CreateMCErrorResponse(0xC058); // 指定デバイスなし
+            }
+
             var responseData = new List<byte>();
 
             // 指定されたデバイスからデータを読み取り
@@ -134,6 +142,14 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
             var deviceCount = BitConverter.ToUInt16(request, 23);
 
             var deviceType = GetDeviceTypeFromCode(deviceCode);
+            
+            // サポートされていないデバイスの場合はエラーを返す
+            if (deviceType == null)
+            {
+                Console.WriteLine($"未サポートデバイスコード: 0x{deviceCode:X2} ({_seriesInfo.Description})");
+                return CreateMCErrorResponse(0xC058); // 指定デバイスなし
+            }
+
             var dataOffset = 25;
 
             // 指定されたデバイスにデータを書き込み
@@ -156,7 +172,7 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
         }
     }
 
-    private string GetDeviceTypeFromCode(byte deviceCode)
+    private string? GetDeviceTypeFromCode(byte deviceCode)
     {
         // シリーズ情報から対応するデバイスタイプを検索
         foreach (var device in _seriesInfo.SupportedDevices)
@@ -167,22 +183,27 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
             }
         }
 
-        // フォールバック
-        return deviceCode switch
-        {
-            0xA8 => "D",  // データレジスタ
-            0x9C => "X",  // 入力リレー
-            0x9D => "Y",  // 出力リレー
-            0x90 => "M",  // 内部リレー
-            0xA0 => "B",  // リンクリレー
-            0x93 => "F",  // ラッチリレー
-            0x94 => "V",  // エッジリレー
-            0x98 => "S",  // ステップリレー
-            0xB4 => "W",  // リンクレジスタ
-            0xAF => "R",  // ファイルレジスタ
-            0xCC => "Z",  // インデックスレジスタ
-            _ => "D"      // デフォルト
-        };
+        // サポートされていないデバイスの場合はnullを返す
+        return null;
+    }
+
+    /// <summary>
+    /// 指定されたデバイスコードがサポートされているかチェック
+    /// </summary>
+    /// <param name="deviceCode">デバイスコード</param>
+    /// <returns>サポートされている場合はtrue</returns>
+    public bool IsDeviceCodeSupported(byte deviceCode)
+    {
+        return GetDeviceTypeFromCode(deviceCode) != null;
+    }
+
+    /// <summary>
+    /// サポートされているデバイスコードの一覧を取得
+    /// </summary>
+    /// <returns>デバイスコードの配列</returns>
+    public byte[] GetSupportedDeviceCodes()
+    {
+        return _seriesInfo.SupportedDevices.Values.Select(d => d.Code).ToArray();
     }
 
     /// <summary>

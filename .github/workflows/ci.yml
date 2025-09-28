@@ -271,8 +271,14 @@ jobs:
     
     - name: Generate API documentation
       run: |
+        echo "Starting DocFX documentation generation..."
         docfx metadata docfx.json
+        echo "Metadata generation completed. Checking generated files..."
+        ls -la api/ || echo "api directory not found"
         docfx build docfx.json
+        echo "Build completed. Checking output..."
+        ls -la api-docs/ || echo "api-docs directory not found"
+        find api-docs/ -name "*.html" | head -5 || echo "No HTML files found"
     
     - name: Setup Pages
       uses: actions/configure-pages@v4

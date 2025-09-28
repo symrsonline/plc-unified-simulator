@@ -13,6 +13,7 @@ public abstract class PLCProtocolBase : IPLCProtocol, IDisposable
     public bool IsConnected => _isConnected;
 
     public abstract Task<bool> ConnectAsync(string ipAddress, int port, CancellationToken cancellationToken = default);
+    public abstract Task<bool> ConnectUdpAsync(string ipAddress, int port, CancellationToken cancellationToken = default);
     public abstract Task DisconnectAsync();
     public abstract Task<PLCData?> ReadAsync(PLCAddress address, CancellationToken cancellationToken = default);
     public abstract Task<bool> WriteAsync(PLCAddress address, byte[] data, CancellationToken cancellationToken = default);

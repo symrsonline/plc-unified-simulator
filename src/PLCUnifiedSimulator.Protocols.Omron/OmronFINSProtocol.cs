@@ -42,6 +42,14 @@ public class OmronFINSProtocol : PLCProtocolBase
         }
     }
 
+    public override async Task<bool> ConnectUdpAsync(string ipAddress, int port, CancellationToken cancellationToken = default)
+    {
+        // UDPは接続レス型プロトコルのため、常に成功とする
+        _isConnected = true;
+        await Task.CompletedTask;
+        return true;
+    }
+
     public override async Task DisconnectAsync()
     {
         lock (_lockObject)
@@ -54,6 +62,7 @@ public class OmronFINSProtocol : PLCProtocolBase
             _tcpClient = null;
             _isConnected = false;
         }
+        await Task.CompletedTask;
     }
 
     public override async Task<PLCData?> ReadAsync(PLCAddress address, CancellationToken cancellationToken = default)

@@ -7,16 +7,16 @@ using System.Reflection;
 namespace PLCUnifiedSimulator.Console;
 
 /// <summary>
-/// FaEngine接続テスト用プログラム
+/// PLCシミュレータコンソールプログラム
 /// </summary>
-public class FaEngineTestProgram
+public class PLCSimulatorConsole
 {
     private static readonly Dictionary<MitsubishiPLCSeries, MitsubishiMCSimulator> _runningSimulators = new();
 
     public static async Task RunAsync(string[] args)
     {
         System.Console.WriteLine("==============================================");
-        System.Console.WriteLine("   PLC Unified Simulator - FaEngine Test");
+        System.Console.WriteLine("      PLC Unified Simulator Console");
         System.Console.WriteLine("==============================================");
         System.Console.WriteLine();
 
@@ -47,7 +47,7 @@ public class FaEngineTestProgram
             System.Console.WriteLine("5. テストデータ設定");
             System.Console.WriteLine("6. デバイス値表示");
             System.Console.WriteLine("7. シミュレータ停止");
-            System.Console.WriteLine("8. FaEngine接続手順表示");
+            System.Console.WriteLine("8. 通信プロトコル設定");
             System.Console.WriteLine("0. 終了");
             System.Console.WriteLine();
             System.Console.Write("選択してください (0-8): ");
@@ -78,7 +78,7 @@ public class FaEngineTestProgram
                     await StopSimulatorAsync();
                     break;
                 case "8":
-                    ShowFaEngineConnectionGuide();
+                    ShowProtocolConfiguration();
                     break;
                 case "0":
                     return;
@@ -478,29 +478,27 @@ public class FaEngineTestProgram
         System.Console.WriteLine("✓ 全てのシミュレータを停止しました");
     }
 
-    private static void ShowFaEngineConnectionGuide()
+    private static void ShowProtocolConfiguration()
     {
         System.Console.WriteLine();
-        System.Console.WriteLine("FaEngine接続手順ガイド:");
+        System.Console.WriteLine("通信プロトコル設定ガイド:");
         System.Console.WriteLine("=" + new string('=', 80));
         System.Console.WriteLine();
         
-        System.Console.WriteLine("1. 三菱MCプロトコル (バイナリ) の設定例:");
-        System.Console.WriteLine("   - プロトコル: MC Protocol (Binary)");
-        System.Console.WriteLine("   - IPアドレス: 127.0.0.1");
-        System.Console.WriteLine("   - ポート番号: 5000 (QJ71E71_Binary_Station1の場合)");
-        System.Console.WriteLine("   - ネットワーク番号: 0");
-        System.Console.WriteLine("   - PC番号: FF");
-        System.Console.WriteLine("   - 要求先ユニットI/O番号: 03FF");
+        System.Console.WriteLine("1. TCP通信設定:");
+        System.Console.WriteLine("   - 三菱MCプロトコル (バイナリ)");
+        System.Console.WriteLine("     IPアドレス: 127.0.0.1, ポート: 5000-5002");
+        System.Console.WriteLine("   - 三菱MCプロトコル (ASCII)");
+        System.Console.WriteLine("     IPアドレス: 127.0.0.1, ポート: 5010-5012");
+        System.Console.WriteLine("   - オムロンFINSプロトコル");
+        System.Console.WriteLine("     IPアドレス: 127.0.0.1, ポート: 9600");
         System.Console.WriteLine();
         
-        System.Console.WriteLine("2. 三菱MCプロトコル (ASCII) の設定例:");
-        System.Console.WriteLine("   - プロトコル: MC Protocol (ASCII)");
-        System.Console.WriteLine("   - IPアドレス: 127.0.0.1");
-        System.Console.WriteLine("   - ポート番号: 5010 (QJ71E71_ASCII_Station1の場合)");
-        System.Console.WriteLine("   - ネットワーク番号: 00");
-        System.Console.WriteLine("   - PC番号: FF");
-        System.Console.WriteLine("   - 要求先ユニットI/O番号: 03FF");
+        System.Console.WriteLine("2. UDP通信設定:");
+        System.Console.WriteLine("   - 三菱MCプロトコル (UDP対応)");
+        System.Console.WriteLine("     IPアドレス: 127.0.0.1, ポート: 5100-5112");
+        System.Console.WriteLine("   - オムロンFINSプロトコル (UDP対応)");
+        System.Console.WriteLine("     IPアドレス: 127.0.0.1, ポート: 9700");
         System.Console.WriteLine();
         
         System.Console.WriteLine("3. テスト用デバイスアドレス:");
@@ -513,7 +511,8 @@ public class FaEngineTestProgram
         var availableSeries = MitsubishiPLCSimulatorFactory.GetAvailableSeries();
         foreach (var (series, description, port) in availableSeries.Take(10))
         {
-            System.Console.WriteLine($"   - {series}: ポート {port}");
+            var udpPort = port + 100; // UDP port is TCP port + 100
+            System.Console.WriteLine($"   - {series}: TCP {port}, UDP {udpPort}");
         }
         if (availableSeries.Count > 10)
         {
@@ -523,9 +522,10 @@ public class FaEngineTestProgram
         System.Console.WriteLine();
         System.Console.WriteLine("5. 接続テスト手順:");
         System.Console.WriteLine("   1) 上記メニューでシミュレータを開始");
-        System.Console.WriteLine("   2) FaEngineで対応するプロトコルと設定を選択");
-        System.Console.WriteLine("   3) 通信テストを実行");
-        System.Console.WriteLine("   4) デバイス読み取り/書き込みテストを実行");
+        System.Console.WriteLine("   2) クライアントで対応するプロトコルと設定を選択");
+        System.Console.WriteLine("   3) TCP/UDP通信方式を選択");
+        System.Console.WriteLine("   4) 通信テストを実行");
+        System.Console.WriteLine("   5) デバイス読み取り/書き込みテストを実行");
         System.Console.WriteLine();
     }
 

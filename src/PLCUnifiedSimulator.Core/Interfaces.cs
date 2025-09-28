@@ -16,9 +16,14 @@ public interface IPLCProtocol
     int DefaultPort { get; }
 
     /// <summary>
-    /// 接続を開始します
+    /// TCP接続を開始します
     /// </summary>
     Task<bool> ConnectAsync(string ipAddress, int port, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// UDP接続を開始します
+    /// </summary>
+    Task<bool> ConnectUdpAsync(string ipAddress, int port, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 接続を切断します
@@ -62,9 +67,19 @@ public interface IPLCSimulator
     IPLCProtocol Protocol { get; }
 
     /// <summary>
-    /// シミュレータを開始します
+    /// TCP接続でシミュレータを開始します
     /// </summary>
     Task StartAsync(int port, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// UDP接続でシミュレータを開始します
+    /// </summary>
+    Task StartUdpAsync(int port, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// TCP/UDP両方でシミュレータを開始します
+    /// </summary>
+    Task StartBothAsync(int tcpPort, int udpPort, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// シミュレータを停止します

@@ -6,7 +6,11 @@
         {
           "src": "src",
           "files": [
-            "**/*.csproj"
+            "PLCUnifiedSimulator.Core/PLCUnifiedSimulator.Core.csproj",
+            "PLCUnifiedSimulator.Console/PLCUnifiedSimulator.Console.csproj",
+            "PLCUnifiedSimulator.Protocols.Mitsubishi/PLCUnifiedSimulator.Protocols.Mitsubishi.csproj",
+            "PLCUnifiedSimulator.Protocols.Omron/PLCUnifiedSimulator.Protocols.Omron.csproj",
+            "PLCUnifiedSimulator.Simulators/PLCUnifiedSimulator.Simulators.csproj"
           ]
         }
       ],

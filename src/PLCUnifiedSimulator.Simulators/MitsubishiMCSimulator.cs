@@ -23,6 +23,22 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
         _seriesInfo = MitsubishiPLCSeriesInfo.GetSeriesInfo(series);
     }
 
+    protected override async Task HandleUdpPacketAsync(byte[] data, System.Net.IPEndPoint remoteEndPoint, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = ProcessMCRequest(data, data.Length);
+            if (response.Length > 0 && _udpListener != null)
+            {
+                await _udpListener.SendAsync(response, remoteEndPoint);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"MC UDP パケット処理エラー: {ex.Message}");
+        }
+    }
+
     protected override async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
     {
         using var stream = client.GetStream();

@@ -15,6 +15,34 @@ public class OmronFINSSimulator : PLCSimulatorBase
 
     public override IPLCProtocol Protocol => _protocol;
 
+    protected override async Task HandleUdpPacketAsync(byte[] data, System.Net.IPEndPoint remoteEndPoint, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // UDP接続では接続確立フェーズをスキップし、直接FINSコマンドを処理
+            byte[] response;
+            
+            // UDP FINSの場合は通常のFINS応答フレームを返す
+            if (data.Length >= 12) // 最小FINS UDPフレーム長
+            {
+                response = ProcessFINSUdpRequest(data, data.Length);
+            }
+            else
+            {
+                response = CreateFINSErrorResponse(0x01, 0x01);
+            }
+
+            if (response.Length > 0 && _udpListener != null)
+            {
+                await _udpListener.SendAsync(response, remoteEndPoint);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FINS UDP パケット処理エラー: {ex.Message}");
+        }
+    }
+
     protected override async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
     {
         using var stream = client.GetStream();
@@ -244,6 +272,130 @@ public class OmronFINSSimulator : PLCSimulatorBase
             0x00, 0x00, 0x00, 0x1A, // Length
             0x00, 0x00, 0x00, 0x02, // Command
             0x00, 0x00, 0x00, 0x00, // Error code
+            0xC0, 0x00, 0x02,       // ICF, RSV, GCT
+            0x00, 0x00, 0x00,       // DNA, DA1, DA2
+            0x01, 0x00, 0x00,       // SNA, SA1, SA2
+            0x00,                   // SID
+            mainResponseCode,       // MRC
+            subResponseCode         // SRC
+        };
+    }
+
+    private byte[] ProcessFINSUdpRequest(byte[] request, int length)
+    {
+        try
+        {
+            if (length < 12) return CreateFINSUdpErrorResponse(0x01, 0x01);
+
+            // UDP FINS フレーム解析（TCPヘッダなし）
+            var commandCode1 = request[10];
+            var commandCode2 = request[11];
+
+            return (commandCode1, commandCode2) switch
+            {
+                (0x01, 0x01) => ProcessFINSUdpReadRequest(request, length),
+                (0x01, 0x02) => ProcessFINSUdpWriteRequest(request, length),
+                _ => CreateFINSUdpErrorResponse(0x01, 0x01)
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FINS UDP要求処理エラー: {ex.Message}");
+            return CreateFINSUdpErrorResponse(0x01, 0x03);
+        }
+    }
+
+    private byte[] ProcessFINSUdpReadRequest(byte[] request, int length)
+    {
+        if (length < 18) return CreateFINSUdpErrorResponse(0x01, 0x01);
+
+        try
+        {
+            var memoryAreaCode = request[12];
+            var address = (ushort)((request[13] << 8) | request[14]);
+            var bitPosition = request[15];
+            var itemCount = (ushort)((request[16] << 8) | request[17]);
+
+            var deviceType = GetDeviceTypeFromMemoryArea(memoryAreaCode);
+            var responseData = new List<byte>();
+
+            for (int i = 0; i < itemCount; i++)
+            {
+                var plcAddress = new PLCAddress(deviceType, address + i, 1);
+                var data = GetDeviceValue(plcAddress) ?? new byte[] { 0x00, 0x00 };
+                responseData.AddRange(data);
+            }
+
+            return CreateFINSUdpSuccessResponse(request, responseData.ToArray());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FINS UDP読み取り処理エラー: {ex.Message}");
+            return CreateFINSUdpErrorResponse(0x01, 0x03);
+        }
+    }
+
+    private byte[] ProcessFINSUdpWriteRequest(byte[] request, int length)
+    {
+        if (length < 18) return CreateFINSUdpErrorResponse(0x01, 0x01);
+
+        try
+        {
+            var memoryAreaCode = request[12];
+            var address = (ushort)((request[13] << 8) | request[14]);
+            var bitPosition = request[15];
+            var itemCount = (ushort)((request[16] << 8) | request[17]);
+
+            var deviceType = GetDeviceTypeFromMemoryArea(memoryAreaCode);
+            var dataOffset = 18;
+
+            for (int i = 0; i < itemCount; i++)
+            {
+                if (dataOffset + 2 > length) break;
+
+                var plcAddress = new PLCAddress(deviceType, address + i, 1);
+                var data = new byte[] { request[dataOffset], request[dataOffset + 1] };
+                SetDeviceValue(plcAddress, data);
+                dataOffset += 2;
+            }
+
+            return CreateFINSUdpSuccessResponse(request, Array.Empty<byte>());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FINS UDP書き込み処理エラー: {ex.Message}");
+            return CreateFINSUdpErrorResponse(0x01, 0x03);
+        }
+    }
+
+    private byte[] CreateFINSUdpSuccessResponse(byte[] originalRequest, byte[] data)
+    {
+        var response = new List<byte>();
+        
+        // FINS UDPフレーム（TCPヘッダなし）
+        response.Add(0xC0); // ICF (応答)
+        response.Add(0x00); // RSV
+        response.Add(0x02); // GCT
+        response.Add(originalRequest[6]); // DNA (元の送信元)
+        response.Add(originalRequest[7]); // DA1
+        response.Add(originalRequest[8]); // DA2
+        response.Add(originalRequest[3]); // SNA (元の宛先)
+        response.Add(originalRequest[4]); // SA1
+        response.Add(originalRequest[5]); // SA2
+        response.Add(originalRequest[9]); // SID
+        response.Add(0x00); // MRC (正常終了)
+        response.Add(0x00); // SRC (正常終了)
+        
+        // データ
+        response.AddRange(data);
+
+        return response.ToArray();
+    }
+
+    private byte[] CreateFINSUdpErrorResponse(byte mainResponseCode, byte subResponseCode)
+    {
+        return new byte[]
+        {
             0xC0, 0x00, 0x02,       // ICF, RSV, GCT
             0x00, 0x00, 0x00,       // DNA, DA1, DA2
             0x01, 0x00, 0x00,       // SNA, SA1, SA2

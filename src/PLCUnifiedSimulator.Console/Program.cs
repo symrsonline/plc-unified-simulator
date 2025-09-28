@@ -6,6 +6,6 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        await FaEngineTestProgram.RunAsync(args);
+        await PLCSimulatorConsole.RunAsync(args);
     }
 }

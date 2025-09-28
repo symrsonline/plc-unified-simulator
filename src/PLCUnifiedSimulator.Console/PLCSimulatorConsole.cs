@@ -18,7 +18,7 @@ public class PLCSimulatorConsole
     private static ILogger? _logger;
     private static IServiceProvider? _serviceProvider;
 
-    public static async Task RunAsync(string[] args, IServiceProvider serviceProvider)
+    public static async Task RunInteractiveAsync(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = serviceProvider.GetRequiredService<ILogger<PLCSimulatorConsole>>();
@@ -43,6 +43,106 @@ public class PLCSimulatorConsole
         {
             await StopAllSimulatorsAsync();
             _logger.LogInformation("PLC Unified Simulator Console を終了します");
+        }
+    }
+
+    public static async Task RunMitsubishiSimulatorAsync(int port, string seriesName, IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+        _logger = serviceProvider.GetRequiredService<ILogger<PLCSimulatorConsole>>();
+
+        _logger.LogInformation("三菱MCプロトコルシミュレータを開始します - ポート: {Port}, シリーズ: {Series}", port, seriesName);
+
+        try
+        {
+            // シリーズ名の解析
+            if (!Enum.TryParse<MitsubishiPLCSeries>(seriesName, out var series))
+            {
+                _logger.LogError("無効なPLCシリーズ名: {SeriesName}", seriesName);
+                System.Console.WriteLine($"エラー: 無効なPLCシリーズ名 '{seriesName}'");
+                return;
+            }
+
+            // シミュレータの作成と開始
+            var simulator = new MitsubishiMCSimulator(series, _logger);
+            await simulator.StartAsync(port);
+            _runningSimulators[series] = simulator;
+
+            _logger.LogInformation("{Series} シミュレータがポート {Port} で正常に開始されました", series, port);
+            System.Console.WriteLine($"✓ {series} シミュレータがポート {port} で開始されました");
+            System.Console.WriteLine("Ctrl+C で停止します...");
+
+            // テストデータを設定
+            await SetDefaultTestData(simulator, series);
+
+            // 終了待機
+            var cancellationTokenSource = new CancellationTokenSource();
+            System.Console.CancelKeyPress += (sender, e) =>
+            {
+                e.Cancel = true;
+                cancellationTokenSource.Cancel();
+            };
+
+            await Task.Delay(Timeout.Infinite, cancellationTokenSource.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            _logger.LogInformation("シミュレータがユーザーによって停止されました");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "三菱MCプロトコルシミュレータの実行中にエラーが発生しました");
+            System.Console.WriteLine($"エラーが発生しました: {ex.Message}");
+        }
+        finally
+        {
+            await StopAllSimulatorsAsync();
+        }
+    }
+
+    public static async Task RunOmronSimulatorAsync(int port, IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+        _logger = serviceProvider.GetRequiredService<ILogger<PLCSimulatorConsole>>();
+
+        _logger.LogInformation("オムロンFINSプロトコルシミュレータを開始します - ポート: {Port}", port);
+
+        try
+        {
+            // シミュレータの作成と開始
+            var simulator = OmronPLCSimulatorFactory.CreateSimulator(_logger);
+            await simulator.StartAsync(port);
+            _runningOmronSimulator = simulator;
+
+            _logger.LogInformation("オムロンFINSシミュレータがポート {Port} で正常に開始されました", port);
+            System.Console.WriteLine($"✓ オムロンFINSシミュレータがポート {port} で開始されました");
+            System.Console.WriteLine("Ctrl+C で停止します...");
+
+            // テストデータを設定
+            await SetDefaultTestDataForOmron(simulator);
+
+            // 終了待機
+            var cancellationTokenSource = new CancellationTokenSource();
+            System.Console.CancelKeyPress += (sender, e) =>
+            {
+                e.Cancel = true;
+                cancellationTokenSource.Cancel();
+            };
+
+            await Task.Delay(Timeout.Infinite, cancellationTokenSource.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            _logger.LogInformation("シミュレータがユーザーによって停止されました");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "オムロンFINSプロトコルシミュレータの実行中にエラーが発生しました");
+            System.Console.WriteLine($"エラーが発生しました: {ex.Message}");
+        }
+        finally
+        {
+            await StopAllSimulatorsAsync();
         }
     }
 

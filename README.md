@@ -64,9 +64,52 @@ dotnet test
 
 ### シミュレータ起動
 
+#### インタラクティブモード（デフォルト）
 ```bash
 dotnet run --project src/PLCUnifiedSimulator.Console
 ```
+
+#### コマンドラインモード
+
+##### ヘルプ表示
+```bash
+dotnet run --project src/PLCUnifiedSimulator.Console -- --help
+```
+
+##### 三菱MCプロトコルシミュレータ起動
+```bash
+# デフォルト設定（ポート5000、QJ71E71_Binary_Station1）
+dotnet run --project src/PLCUnifiedSimulator.Console -- mitsubishi
+
+# カスタムポート指定
+dotnet run --project src/PLCUnifiedSimulator.Console -- mitsubishi --port 5001
+
+# シリーズ指定
+dotnet run --project src/PLCUnifiedSimulator.Console -- mitsubishi --series FX3U_ENET --port 5002
+```
+
+##### オムロンFINSプロトコルシミュレータ起動
+```bash
+# デフォルト設定（ポート9600）
+dotnet run --project src/PLCUnifiedSimulator.Console -- omron
+
+# カスタムポート指定
+dotnet run --project src/PLCUnifiedSimulator.Console -- omron --port 9601
+```
+
+##### 使用可能なPLCシリーズ
+- `QJ71E71_Binary_Station1` - MELSEC-Q/L/iQ-Rシリーズ アクセス局1 (バイナリ)
+- `QJ71E71_Binary_Station2` - MELSEC-Q/L/iQ-Rシリーズ アクセス局2 (バイナリ)
+- `QJ71E71_Binary_Station3` - MELSEC-Q/L/iQ-Rシリーズ アクセス局3 (バイナリ)
+- `QJ71E71_ASCII_Station1` - MELSEC-Q/L/iQ-Rシリーズ アクセス局1 (ASCII)
+- `QJ71E71_ASCII_Station2` - MELSEC-Q/L/iQ-Rシリーズ アクセス局2 (ASCII)
+- `QJ71E71_ASCII_Station3` - MELSEC-Q/L/iQ-Rシリーズ アクセス局3 (ASCII)
+- `FX5U_CPU_Binary` - MELSEC iQ-Fシリーズ FX5U (CPUポートバイナリ)
+- `FX5U_CPU_ASCII` - MELSEC iQ-Fシリーズ FX5U (CPUポートASCII)
+- `AJ71QE71_Station1` - MELSEC-QnAシリーズ アクセス局1
+- `AJ71QE71_Station2` - MELSEC-QnAシリーズ アクセス局2
+- `AJ71E71` - MELSEC-Aシリーズ
+- `FX3U_ENET` - MELSEC-FXシリーズ FX3U-ENET
 
 ### 基本的な使用例
 

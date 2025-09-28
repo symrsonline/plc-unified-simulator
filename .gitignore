@@ -16,6 +16,7 @@ publish/
 # DocFX generated files
 _site/
 api/
+coverage/
 *.yml
 *.yaml
 docfx.json

@@ -10,9 +10,18 @@ namespace PLCUnifiedSimulator.Simulators;
 /// </summary>
 public class MitsubishiMCSimulator : PLCSimulatorBase
 {
-    private readonly MitsubishiMCProtocol _protocol = new();
+    private readonly MitsubishiMCProtocol _protocol;
+    private readonly MitsubishiPLCSeriesInfo _seriesInfo;
 
+    public MitsubishiPLCSeries PLCSeries { get; }
     public override IPLCProtocol Protocol => _protocol;
+
+    public MitsubishiMCSimulator(MitsubishiPLCSeries series = MitsubishiPLCSeries.QJ71E71_Binary_Station1)
+    {
+        PLCSeries = series;
+        _protocol = new MitsubishiMCProtocol(series);
+        _seriesInfo = MitsubishiPLCSeriesInfo.GetSeriesInfo(series);
+    }
 
     protected override async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
     {
@@ -133,12 +142,22 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
 
     private string GetDeviceTypeFromCode(byte deviceCode)
     {
+        // シリーズ情報から対応するデバイスタイプを検索
+        foreach (var device in _seriesInfo.SupportedDevices)
+        {
+            if (device.Value.Code == deviceCode)
+            {
+                return device.Key;
+            }
+        }
+
+        // フォールバック
         return deviceCode switch
         {
-            0x90 => "D",  // データレジスタ
+            0xA8 => "D",  // データレジスタ
             0x9C => "X",  // 入力リレー
             0x9D => "Y",  // 出力リレー
-            0xA8 => "M",  // 内部リレー
+            0x90 => "M",  // 内部リレー
             0xA0 => "B",  // リンクリレー
             0x93 => "F",  // ラッチリレー
             0x94 => "V",  // エッジリレー
@@ -148,6 +167,22 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
             0xCC => "Z",  // インデックスレジスタ
             _ => "D"      // デフォルト
         };
+    }
+
+    /// <summary>
+    /// サポートされているデバイスの一覧を取得
+    /// </summary>
+    public IReadOnlyDictionary<string, (byte Code, bool IsWordDevice)> GetSupportedDevices()
+    {
+        return _seriesInfo.SupportedDevices;
+    }
+
+    /// <summary>
+    /// PLCシリーズの説明を取得
+    /// </summary>
+    public string GetSeriesDescription()
+    {
+        return _seriesInfo.Description;
     }
 
     private byte[] CreateMCSuccessResponse(byte[] data)

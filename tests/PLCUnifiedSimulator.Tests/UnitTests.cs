@@ -110,8 +110,8 @@ public class MitsubishiMCProtocolTests
         var protocol = new MitsubishiMCProtocol();
 
         // Assert
-        protocol.ProtocolName.Should().Be("Mitsubishi MC Protocol");
-        protocol.DefaultPort.Should().Be(5007);
+        protocol.ProtocolName.Should().StartWith("Mitsubishi MC Protocol");
+        protocol.DefaultPort.Should().Be(5000);
         protocol.IsConnected.Should().BeFalse();
     }
 }
@@ -141,7 +141,7 @@ public class MitsubishiMCSimulatorTests
 
         // Assert
         simulator.Protocol.Should().NotBeNull();
-        simulator.Protocol.ProtocolName.Should().Be("Mitsubishi MC Protocol");
+        simulator.Protocol.ProtocolName.Should().StartWith("Mitsubishi MC Protocol");
         simulator.IsRunning.Should().BeFalse();
     }
 

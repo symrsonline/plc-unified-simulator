@@ -1,0 +1,10 @@
+apiRules:
+- exclude:
+    uidRegex: ^System\.|^Microsoft\.|^Newtonsoft\.|^Xunit\.|^FluentAssertions\.
+    type: Type
+- exclude:
+    uidRegex: ^PLCUnifiedSimulator\.Tests\.
+    type: Namespace
+- include:
+    uidRegex: ^PLCUnifiedSimulator\.
+    type: Namespace

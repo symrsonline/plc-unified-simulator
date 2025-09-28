@@ -44,7 +44,7 @@ jobs:
       run: dotnet build PLCUnifiedSimulator.sln --no-restore --configuration Release
     
     - name: Run tests
-      run: dotnet test PLCUnifiedSimulator.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage --settings CodeCoverage.runsettings
+      run: dotnet test PLCUnifiedSimulator.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
     
     - name: Upload coverage reports to Codecov
       if: matrix.os == 'ubuntu-latest'

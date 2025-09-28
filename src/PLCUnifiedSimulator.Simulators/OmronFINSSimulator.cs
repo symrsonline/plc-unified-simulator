@@ -21,7 +21,7 @@ public class OmronFINSSimulator : PLCSimulatorBase
         {
             // UDP接続では接続確立フェーズをスキップし、直接FINSコマンドを処理
             byte[] response;
-            
+
             // UDP FINSの場合は通常のFINS応答フレームを返す
             if (data.Length >= 12) // 最小FINS UDPフレーム長
             {
@@ -89,12 +89,12 @@ public class OmronFINSSimulator : PLCSimulatorBase
             var buffer = new byte[20];
             var bytesRead = await stream.ReadAsync(buffer, cancellationToken);
 
-            if (bytesRead >= 20 && 
-                buffer[0] == 0x46 && buffer[1] == 0x49 && 
+            if (bytesRead >= 20 &&
+                buffer[0] == 0x46 && buffer[1] == 0x49 &&
                 buffer[2] == 0x4E && buffer[3] == 0x53) // "FINS"
             {
                 var clientNodeAddress = buffer[19];
-                
+
                 lock (_clientNodes)
                 {
                     _clientNodes[stream] = clientNodeAddress;
@@ -131,7 +131,7 @@ public class OmronFINSSimulator : PLCSimulatorBase
             if (length < 34) return CreateFINSErrorResponse(0x01, 0x01); // フレーム長異常
 
             // FINSヘッダー確認
-            if (request[0] != 0x46 || request[1] != 0x49 || 
+            if (request[0] != 0x46 || request[1] != 0x49 ||
                 request[2] != 0x4E || request[3] != 0x53) // "FINS"
             {
                 return CreateFINSErrorResponse(0x01, 0x02); // フレーム異常
@@ -237,13 +237,13 @@ public class OmronFINSSimulator : PLCSimulatorBase
     private byte[] CreateFINSSuccessResponse(byte[] originalRequest, byte[] data)
     {
         var response = new List<byte>();
-        
+
         // FINSヘッダ
         response.AddRange(new byte[] { 0x46, 0x49, 0x4E, 0x53 }); // "FINS"
         response.AddRange(BitConverter.GetBytes(0x1A + data.Length).Reverse()); // Length (big endian)
         response.AddRange(BitConverter.GetBytes((uint)0x02).Reverse()); // Command (big endian)
         response.AddRange(BitConverter.GetBytes((uint)0x00).Reverse()); // Error code (big endian)
-        
+
         // FINS応答フレーム
         response.Add(0xC0); // ICF (応答)
         response.Add(0x00); // RSV
@@ -257,7 +257,7 @@ public class OmronFINSSimulator : PLCSimulatorBase
         response.Add(originalRequest[25]); // SID
         response.Add(0x00); // MRC (正常終了)
         response.Add(0x00); // SRC (正常終了)
-        
+
         // データ
         response.AddRange(data);
 
@@ -371,7 +371,7 @@ public class OmronFINSSimulator : PLCSimulatorBase
     private byte[] CreateFINSUdpSuccessResponse(byte[] originalRequest, byte[] data)
     {
         var response = new List<byte>();
-        
+
         // FINS UDPフレーム（TCPヘッダなし）
         response.Add(0xC0); // ICF (応答)
         response.Add(0x00); // RSV
@@ -385,7 +385,7 @@ public class OmronFINSSimulator : PLCSimulatorBase
         response.Add(originalRequest[9]); // SID
         response.Add(0x00); // MRC (正常終了)
         response.Add(0x00); // SRC (正常終了)
-        
+
         // データ
         response.AddRange(data);
 

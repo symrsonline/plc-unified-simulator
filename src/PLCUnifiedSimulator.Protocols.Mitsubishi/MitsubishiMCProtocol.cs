@@ -79,13 +79,13 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
             var response = new byte[1024];
             var bytesRead = await _stream.ReadAsync(response, cancellationToken);
-            
+
             if (IsValidResponse(response, bytesRead))
             {
                 var data = ExtractDataFromResponse(response, bytesRead, address.Size * 2); // 2 bytes per word
                 return new PLCData(address, data);
             }
-            
+
             return null;
         }
         catch (NotSupportedException)
@@ -119,7 +119,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
             var response = new byte[256];
             var bytesRead = await _stream.ReadAsync(response, cancellationToken);
-            
+
             return IsValidResponse(response, bytesRead);
         }
         catch (NotSupportedException)
@@ -154,7 +154,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
     {
         // MCプロトコル バイナリ バッチ読み出し要求フレーム
         var frame = new List<byte>();
-        
+
         // フレームヘッダ
         frame.AddRange(Encoding.ASCII.GetBytes("5000")); // サブヘッダ
         frame.Add(_seriesInfo.NetworkNumber); // 要求先ネットワーク番号
@@ -183,7 +183,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
     {
         // MCプロトコル ASCII バッチ読み出し要求フレーム
         var deviceInfo = GetDeviceInfo(address.DeviceType);
-        
+
         var command = $"0401" + // コマンド
                      $"0000" + // サブコマンド
                      $"{address.Address:D6}" + // デバイス番号（6桁）
@@ -218,7 +218,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
     {
         // MCプロトコル バイナリ バッチ書き込み要求フレーム
         var frame = new List<byte>();
-        
+
         // フレームヘッダ
         frame.AddRange(Encoding.ASCII.GetBytes("5000")); // サブヘッダ
         frame.Add(_seriesInfo.NetworkNumber); // 要求先ネットワーク番号
@@ -250,7 +250,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
     {
         // MCプロトコル ASCII バッチ書き込み要求フレーム
         var deviceInfo = GetDeviceInfo(address.DeviceType);
-        
+
         var dataHex = Convert.ToHexString(data);
         var command = $"1401" + // コマンド
                      $"0000" + // サブコマンド
@@ -274,7 +274,7 @@ public class MitsubishiMCProtocol : PLCProtocolBase
     private bool IsValidResponse(byte[] response, int length)
     {
         if (length < 11) return false;
-        
+
         // エラーコードをチェック (オフセット9-10)
         var errorCode = BitConverter.ToUInt16(response, 9);
         return errorCode == 0;
@@ -291,13 +291,13 @@ public class MitsubishiMCProtocol : PLCProtocolBase
     private (byte Code, string Name) GetDeviceInfo(string deviceType)
     {
         var upperDeviceType = deviceType.ToUpper();
-        
+
         if (_seriesInfo.SupportedDevices.ContainsKey(upperDeviceType))
         {
             var device = _seriesInfo.SupportedDevices[upperDeviceType];
             return (device.Code, upperDeviceType);
         }
-        
+
         // サポートされていないデバイスの場合は例外をスロー
         throw new NotSupportedException(
             $"デバイス '{deviceType}' は {_seriesInfo.Description} でサポートされていません。" +
@@ -352,8 +352,8 @@ public class MitsubishiMCProtocol : PLCProtocolBase
     public bool IsWordDevice(string deviceType)
     {
         var upperDeviceType = deviceType.ToUpper();
-        return _seriesInfo.SupportedDevices.ContainsKey(upperDeviceType) 
-            ? _seriesInfo.SupportedDevices[upperDeviceType].IsWordDevice 
+        return _seriesInfo.SupportedDevices.ContainsKey(upperDeviceType)
+            ? _seriesInfo.SupportedDevices[upperDeviceType].IsWordDevice
             : false;
     }
 

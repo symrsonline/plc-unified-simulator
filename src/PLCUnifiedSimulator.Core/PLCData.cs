@@ -8,7 +8,7 @@ public class PLCAddress
     public string DeviceType { get; set; } = string.Empty;
     public int Address { get; set; }
     public int Size { get; set; }
-    
+
     public PLCAddress(string deviceType, int address, int size = 1)
     {
         DeviceType = deviceType;

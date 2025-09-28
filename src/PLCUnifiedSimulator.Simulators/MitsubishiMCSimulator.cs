@@ -103,7 +103,7 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
             var deviceCount = BitConverter.ToUInt16(request, 23);
 
             var deviceType = GetDeviceTypeFromCode(deviceCode);
-            
+
             // サポートされていないデバイスの場合はエラーを返す
             if (deviceType == null)
             {
@@ -142,7 +142,7 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
             var deviceCount = BitConverter.ToUInt16(request, 23);
 
             var deviceType = GetDeviceTypeFromCode(deviceCode);
-            
+
             // サポートされていないデバイスの場合はエラーを返す
             if (deviceType == null)
             {
@@ -225,7 +225,7 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
     private byte[] CreateMCSuccessResponse(byte[] data)
     {
         var response = new List<byte>();
-        
+
         // 応答ヘッダ
         response.AddRange(Encoding.ASCII.GetBytes("D000")); // サブヘッダ
         response.Add(0x00); // 応答元ネットワーク番号
@@ -234,7 +234,7 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
         response.Add(0x00); // 応答元マルチドロップ局番号
         response.AddRange(BitConverter.GetBytes((ushort)(2 + data.Length))); // 応答データ長
         response.AddRange(BitConverter.GetBytes((ushort)0x0000)); // エラーコード（正常）
-        
+
         // データ
         response.AddRange(data);
 
@@ -244,7 +244,7 @@ public class MitsubishiMCSimulator : PLCSimulatorBase
     private byte[] CreateMCErrorResponse(ushort errorCode)
     {
         var response = new List<byte>();
-        
+
         // 応答ヘッダ
         response.AddRange(Encoding.ASCII.GetBytes("D000")); // サブヘッダ
         response.Add(0x00); // 応答元ネットワーク番号

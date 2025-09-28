@@ -205,10 +205,10 @@ public class UDPCommunicationTests
         // Act & Assert
         var startTask = simulator.StartUdpAsync(6000);
         startTask.Should().NotBeNull();
-        
+
         // UDP is connectionless, so it should start immediately
         simulator.IsRunning.Should().BeTrue();
-        
+
         // Cleanup
         await simulator.StopAsync();
     }
@@ -222,10 +222,10 @@ public class UDPCommunicationTests
         // Act & Assert
         var startTask = simulator.StartUdpAsync(6001);
         startTask.Should().NotBeNull();
-        
+
         // UDP is connectionless, so it should start immediately
         simulator.IsRunning.Should().BeTrue();
-        
+
         // Cleanup
         await simulator.StopAsync();
     }
@@ -239,9 +239,9 @@ public class UDPCommunicationTests
         // Act & Assert
         var startTask = simulator.StartBothAsync(5002, 6002);
         startTask.Should().NotBeNull();
-        
+
         simulator.IsRunning.Should().BeTrue();
-        
+
         // Cleanup
         await simulator.StopAsync();
     }
@@ -255,9 +255,9 @@ public class UDPCommunicationTests
         // Act & Assert
         var startTask = simulator.StartBothAsync(5003, 6003);
         startTask.Should().NotBeNull();
-        
+
         simulator.IsRunning.Should().BeTrue();
-        
+
         // Cleanup
         await simulator.StopAsync();
     }
@@ -271,13 +271,13 @@ public class UDPCommunicationTests
         // Act & Assert
         var connectTask = protocol.ConnectUdpAsync("127.0.0.1", 6004);
         connectTask.Should().NotBeNull();
-        
+
         // UDP connection should succeed immediately
         var result = await connectTask;
         result.Should().BeTrue();
-        
+
         protocol.IsConnected.Should().BeTrue();
-        
+
         // Cleanup
         await protocol.DisconnectAsync();
     }
@@ -291,13 +291,13 @@ public class UDPCommunicationTests
         // Act & Assert
         var connectTask = protocol.ConnectUdpAsync("127.0.0.1", 6005);
         connectTask.Should().NotBeNull();
-        
+
         // UDP connection should succeed immediately
         var result = await connectTask;
         result.Should().BeTrue();
-        
+
         protocol.IsConnected.Should().BeTrue();
-        
+
         // Cleanup
         await protocol.DisconnectAsync();
     }
@@ -343,10 +343,10 @@ public class UDPCommunicationTests
         // Act - Start UDP multiple times
         await simulator.StartUdpAsync(6008);
         await simulator.StartUdpAsync(6008); // Same port
-        
+
         // Assert - Should still be running
         simulator.IsRunning.Should().BeTrue();
-        
+
         // Cleanup
         await simulator.StopAsync();
     }
@@ -376,18 +376,18 @@ public class UDPPacketCommunicationTests
         // Arrange
         using var simulator = new MitsubishiMCSimulator();
         await simulator.StartUdpAsync(6010);
-        
+
         using var udpClient = new System.Net.Sockets.UdpClient();
-        
+
         try
         {
             // Act - Send a simple UDP packet to the simulator
             var testPacket = new byte[] { 0x50, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04 };
             await udpClient.SendAsync(testPacket, new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 6010));
-            
+
             // Wait a short time for processing
             await Task.Delay(100);
-            
+
             // Assert - Simulator should still be running
             simulator.IsRunning.Should().BeTrue();
         }
@@ -404,14 +404,14 @@ public class UDPPacketCommunicationTests
         // Arrange
         using var simulator = new OmronFINSSimulator();
         await simulator.StartUdpAsync(6011);
-        
+
         using var udpClient = new System.Net.Sockets.UdpClient();
-        
+
         try
         {
             // Act - Send a simple UDP FINS packet to the simulator
-            var testPacket = new byte[] 
-            { 
+            var testPacket = new byte[]
+            {
                 0x80, 0x00, 0x02, // ICF, RSV, GCT
                 0x00, 0x00, 0x00, // DNA, DA1, DA2
                 0x01, 0x00, 0x00, // SNA, SA1, SA2
@@ -419,10 +419,10 @@ public class UDPPacketCommunicationTests
                 0x01, 0x01        // Memory area read command
             };
             await udpClient.SendAsync(testPacket, new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 6011));
-            
+
             // Wait a short time for processing
             await Task.Delay(100);
-            
+
             // Assert - Simulator should still be running
             simulator.IsRunning.Should().BeTrue();
         }
@@ -439,9 +439,9 @@ public class UDPPacketCommunicationTests
         // Arrange
         using var simulator = new MitsubishiMCSimulator();
         await simulator.StartUdpAsync(6012);
-        
+
         var tasks = new List<Task>();
-        
+
         try
         {
             // Act - Send multiple packets concurrently
@@ -455,10 +455,10 @@ public class UDPPacketCommunicationTests
                     udpClient.Close();
                 }));
             }
-            
+
             await Task.WhenAll(tasks);
             await Task.Delay(200); // Allow processing time
-            
+
             // Assert - Simulator should still be running
             simulator.IsRunning.Should().BeTrue();
         }
@@ -474,16 +474,16 @@ public class UDPPacketCommunicationTests
         // Arrange
         using var simulator = new MitsubishiMCSimulator();
         await simulator.StartUdpAsync(6013);
-        
+
         var address = new PLCAddress("D", 200, 1);
         var testValue = BitConverter.GetBytes((short)9999);
-        
+
         try
         {
             // Act
             simulator.SetDeviceValue(address, testValue);
             var retrievedValue = simulator.GetDeviceValue(address);
-            
+
             // Assert
             retrievedValue.Should().BeEquivalentTo(testValue);
             simulator.IsRunning.Should().BeTrue();
@@ -500,9 +500,9 @@ public class UDPPacketCommunicationTests
         // Arrange
         using var simulator = new MitsubishiMCSimulator();
         await simulator.StartUdpAsync(6014);
-        
+
         using var udpClient = new System.Net.Sockets.UdpClient();
-        
+
         try
         {
             // Act - Send invalid packets
@@ -513,14 +513,14 @@ public class UDPPacketCommunicationTests
                 new byte[] { 0x00, 0x00 }, // Too short
                 new byte[1000] // Too long
             };
-            
+
             foreach (var packet in invalidPackets)
             {
                 await udpClient.SendAsync(packet, new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 6014));
             }
-            
+
             await Task.Delay(200);
-            
+
             // Assert - Simulator should still be running despite invalid packets
             simulator.IsRunning.Should().BeTrue();
         }
@@ -537,21 +537,21 @@ public class UDPPacketCommunicationTests
         // Arrange
         using var simulator = new MitsubishiMCSimulator();
         await simulator.StartBothAsync(5015, 6015);
-        
+
         using var udpClient = new System.Net.Sockets.UdpClient();
         using var tcpClient = new System.Net.Sockets.TcpClient();
-        
+
         try
         {
             // Act - Test UDP communication
             var udpPacket = new byte[] { 0x50, 0x00, 0x00, 0x00, 0x99 };
             await udpClient.SendAsync(udpPacket, new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 6015));
-            
+
             // Test TCP connection (just connection, no data)
             await tcpClient.ConnectAsync(System.Net.IPAddress.Loopback, 5015);
-            
+
             await Task.Delay(200);
-            
+
             // Assert
             simulator.IsRunning.Should().BeTrue();
             tcpClient.Connected.Should().BeTrue();
@@ -714,11 +714,11 @@ public class MitsubishiMCExtendedDeviceTests
         // Assert
         protocolDevices.Should().NotBeEmpty();
         simulatorDevices.Should().NotBeEmpty();
-        
+
         // Q/L/iQ-Rシリーズは全デバイスをサポート
-        protocolDevices.Should().ContainKeys("X", "Y", "M", "SM", "L", "F", "C", "B", "SB", 
+        protocolDevices.Should().ContainKeys("X", "Y", "M", "SM", "L", "F", "C", "B", "SB",
                                            "S", "TS", "TC", "SS", "SC", "CS", "CC",
-                                           "TN", "SN", "CN", "D", "SD", "W", "SW", 
+                                           "TN", "SN", "CN", "D", "SD", "W", "SW",
                                            "Z", "R", "ZR", "ZZR");
 
         // プロトコルとシミュレータで同じデバイス情報を返すことを確認

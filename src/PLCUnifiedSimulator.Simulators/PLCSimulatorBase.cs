@@ -118,7 +118,7 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
                 Console.WriteLine($"クライアント {tcpClient.Client.RemoteEndPoint} が接続されました。");
 
                 // 各クライアントを独立したタスクで処理
-                _ = Task.Run(async () => 
+                _ = Task.Run(async () =>
                 {
                     try
                     {

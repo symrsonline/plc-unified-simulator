@@ -8,7 +8,9 @@ using PLCUnifiedSimulator.Core;
 namespace PLCUnifiedSimulator.Simulators;
 
 /// <summary>
-/// PLCシミュレータの基底クラス
+/// PLCシミュレータの基底クラスを提供します。
+/// このクラスはPLC通信プロトコルのシミュレーションに必要な基本的な機能を実装し、
+/// 各PLCプロトコル（三菱MC、オムロンFINSなど）のシミュレータ実装基盤となります。
 /// </summary>
 public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
 {
@@ -23,15 +25,37 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
     protected readonly ILogger _logger;
     private bool _disposed = false;
 
+    /// <summary>
+    /// 使用するPLC通信プロトコルを取得します
+    /// </summary>
     public abstract IPLCProtocol Protocol { get; }
+
+    /// <summary>
+    /// ロガーインスタンスを取得します
+    /// </summary>
     public ILogger Logger => _logger;
+
+    /// <summary>
+    /// シミュレータの実行状態を取得します
+    /// </summary>
     public bool IsRunning => _isRunning;
 
+    /// <summary>
+    /// PLCSimulatorBaseクラスの新しいインスタンスを初期化します
+    /// </summary>
+    /// <param name="logger">ログ出力に使用するロガーインスタンス。nullの場合はNullLoggerを使用します。</param>
     protected PLCSimulatorBase(ILogger? logger = null)
     {
         _logger = logger ?? NullLogger<PLCSimulatorBase>.Instance;
     }
 
+    /// <summary>
+    /// TCPサーバーを開始し、PLCクライアントからの接続を待機します
+    /// </summary>
+    /// <param name="port">TCPサーバーがリッスンするポート番号</param>
+    /// <param name="cancellationToken">キャンセレーショントークン</param>
+    /// <returns>サーバー開始処理の完了を表すTask</returns>
+    /// <exception cref="Exception">サーバー開始に失敗した場合</exception>
     public virtual async Task StartAsync(int port, CancellationToken cancellationToken = default)
     {
         if (_isRunning)
@@ -61,6 +85,13 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
         }
     }
 
+    /// <summary>
+    /// UDPサーバーを開始し、PLCクライアントからのUDPパケットを待機します
+    /// </summary>
+    /// <param name="port">UDPサーバーがリッスンするポート番号</param>
+    /// <param name="cancellationToken">キャンセレーショントークン</param>
+    /// <returns>サーバー開始処理の完了を表すTask</returns>
+    /// <exception cref="Exception">サーバー開始に失敗した場合</exception>
     public virtual async Task StartUdpAsync(int port, CancellationToken cancellationToken = default)
     {
         if (_isUdpRunning)
@@ -89,6 +120,13 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
         }
     }
 
+    /// <summary>
+    /// TCPとUDPの両方のサーバーを開始します
+    /// </summary>
+    /// <param name="tcpPort">TCPサーバーがリッスンするポート番号</param>
+    /// <param name="udpPort">UDPサーバーがリッスンするポート番号</param>
+    /// <param name="cancellationToken">キャンセレーショントークン</param>
+    /// <returns>サーバー開始処理の完了を表すTask</returns>
     public virtual async Task StartBothAsync(int tcpPort, int udpPort, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("TCP/UDP両方のシミュレータを開始します: TCPポート {TcpPort}, UDPポート {UdpPort}", tcpPort, udpPort);
@@ -97,6 +135,10 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
         _logger.LogInformation("TCP/UDP両方のシミュレータが開始されました");
     }
 
+    /// <summary>
+    /// シミュレータを停止します
+    /// </summary>
+    /// <returns>停止処理の完了を表すTask</returns>
     public virtual async Task StopAsync()
     {
         if (!_isRunning)
@@ -118,6 +160,12 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// 指定されたPLCアドレスにデバイス値を設定します
+    /// </summary>
+    /// <param name="address">値を設定するPLCアドレス</param>
+    /// <param name="value">設定するバイナリ値</param>
+    /// <exception cref="ArgumentNullException">valueがnullの場合</exception>
     public virtual void SetDeviceValue(PLCAddress address, byte[] value)
     {
         if (value == null)
@@ -130,6 +178,11 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
         _logger.LogInformation("デバイス {DeviceKey} に値 {Value} を設定しました", key, BitConverter.ToString(value));
     }
 
+    /// <summary>
+    /// 指定されたPLCアドレスからデバイス値を取得します
+    /// </summary>
+    /// <param name="address">値を取得するPLCアドレス</param>
+    /// <returns>デバイス値のバイナリデータ。値が存在しない場合はnull</returns>
     public virtual byte[]? GetDeviceValue(PLCAddress address)
     {
         var key = $"{address.DeviceType}{address.Address}";
@@ -142,7 +195,22 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
         return null;
     }
 
+    /// <summary>
+    /// TCPクライアントからの接続を処理します
+    /// </summary>
+    /// <param name="client">接続されたTCPクライアント</param>
+    /// <param name="cancellationToken">キャンセレーショントークン</param>
+    /// <returns>クライアント処理の完了を表すTask</returns>
     protected abstract Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// UDPパケットを処理します
+    /// </summary>
+    /// <param name="data">受信したUDPパケットのデータ</param>
+    /// <param name="remoteEndPoint">パケットの送信元エンドポイント</param>
+    /// <param name="cancellationToken">キャンセレーショントークン</param>
+    /// <returns>パケット処理の完了を表すTask</returns>
+    protected abstract Task HandleUdpPacketAsync(byte[] data, System.Net.IPEndPoint remoteEndPoint, CancellationToken cancellationToken);
 
     private async Task AcceptClientsAsync(CancellationToken cancellationToken)
     {
@@ -221,14 +289,25 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
         }
     }
 
-    protected abstract Task HandleUdpPacketAsync(byte[] data, System.Net.IPEndPoint remoteEndPoint, CancellationToken cancellationToken);
-
+    /// <summary>
+    /// エラーコードに基づいてエラー応答を作成します
+    /// </summary>
+    /// <param name="errorCode">エラーコード</param>
+    /// <returns>エラー応答のバイナリデータ</returns>
+    /// <remarks>
+    /// このメソッドは基本的な実装を提供します。派生クラスでプロトコル固有のエラー応答を
+    /// 作成する場合は、このメソッドをオーバーライドしてください。
+    /// </remarks>
     protected byte[] CreateErrorResponse(ushort errorCode)
     {
         // 基本的なエラー応答フレーム（プロトコル固有でオーバーライド）
         return BitConverter.GetBytes(errorCode);
     }
 
+    /// <summary>
+    /// リソースの解放を行います
+    /// </summary>
+    /// <param name="disposing">マネージドリソースも解放する場合はtrue</param>
     protected virtual void Dispose(bool disposing)
     {
         if (!_disposed)
@@ -242,6 +321,9 @@ public abstract class PLCSimulatorBase : IPLCSimulator, IDisposable
         }
     }
 
+    /// <summary>
+    /// リソースを解放します
+    /// </summary>
     public void Dispose()
     {
         Dispose(true);

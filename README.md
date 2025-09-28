@@ -33,7 +33,8 @@ PLCUnifiedSimulator/
 │   ├── PLCUnifiedSimulator.Protocols.Mitsubishi/  # 三菱MCプロトコル
 │   ├── PLCUnifiedSimulator.Protocols.Omron/       # オムロンFINSプロトコル
 │   ├── PLCUnifiedSimulator.Simulators/     # シミュレータ実装
-│   └── PLCUnifiedSimulator.Console/        # コンソールアプリケーション
+│   ├── PLCUnifiedSimulator.Console/        # コンソールアプリケーション
+│   └── PLCUnifiedSimulator.GUI/            # GUIアプリケーション（WPF）
 ├── tests/
 │   └── PLCUnifiedSimulator.Tests/          # 単体テスト
 └── PLCUnifiedSimulator.sln                 # ソリューションファイル

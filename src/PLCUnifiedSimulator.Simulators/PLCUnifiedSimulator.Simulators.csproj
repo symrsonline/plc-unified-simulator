@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PLCUnifiedSimulator.Core\PLCUnifiedSimulator.Core.csproj" />
+    <ProjectReference Include="..\PLCUnifiedSimulator.Protocols.Mitsubishi\PLCUnifiedSimulator.Protocols.Mitsubishi.csproj" />
+    <ProjectReference Include="..\PLCUnifiedSimulator.Protocols.Omron\PLCUnifiedSimulator.Protocols.Omron.csproj" />
+  </ItemGroup>
+
+</Project>

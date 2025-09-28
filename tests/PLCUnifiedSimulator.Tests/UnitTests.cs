@@ -564,3 +564,178 @@ public class UDPPacketCommunicationTests
         }
     }
 }
+
+/// <summary>
+/// 三菱MCプロトコル拡張デバイステスト
+/// </summary>
+public class MitsubishiMCExtendedDeviceTests
+{
+    [Theory]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "X")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "Y")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "M")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "SM")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "L")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "F")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "C")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "B")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "SB")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "S")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "TS")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "TC")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "SS")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "SC")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "CS")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "CC")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "TN")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "SN")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "CN")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "D")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "SD")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "W")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "SW")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "Z")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "R")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "ZR")]
+    [InlineData(MitsubishiPLCSeries.QJ71E71_Binary_Station1, "ZZR")]
+    public void QLiQR_Series_Should_Support_All_Specified_Devices(MitsubishiPLCSeries series, string deviceType)
+    {
+        // Arrange
+        var protocol = new MitsubishiMCProtocol(series);
+
+        // Act & Assert
+        protocol.IsDeviceSupported(deviceType).Should().BeTrue($"{deviceType} should be supported in {series}");
+    }
+
+    [Theory]
+    [InlineData(MitsubishiPLCSeries.FX5U_CPU_Binary, "X")]
+    [InlineData(MitsubishiPLCSeries.FX5U_CPU_Binary, "Y")]
+    [InlineData(MitsubishiPLCSeries.FX5U_CPU_Binary, "M")]
+    [InlineData(MitsubishiPLCSeries.FX5U_CPU_Binary, "SM")]
+    [InlineData(MitsubishiPLCSeries.FX5U_CPU_Binary, "D")]
+    [InlineData(MitsubishiPLCSeries.FX5U_CPU_Binary, "SD")]
+    [InlineData(MitsubishiPLCSeries.FX5U_CPU_Binary, "C")]
+    [InlineData(MitsubishiPLCSeries.FX5U_CPU_Binary, "S")]
+    [InlineData(MitsubishiPLCSeries.FX5U_CPU_Binary, "TN")]
+    [InlineData(MitsubishiPLCSeries.FX5U_CPU_Binary, "CN")]
+    public void FX5U_Series_Should_Support_Basic_Devices(MitsubishiPLCSeries series, string deviceType)
+    {
+        // Arrange
+        var protocol = new MitsubishiMCProtocol(series);
+
+        // Act & Assert
+        protocol.IsDeviceSupported(deviceType).Should().BeTrue($"{deviceType} should be supported in {series}");
+    }
+
+    [Theory]
+    [InlineData(MitsubishiPLCSeries.FX3U_ENET, "ZZR")] // FXシリーズでサポートされていないデバイス
+    [InlineData(MitsubishiPLCSeries.FX3U_ENET, "ZR")]  // FXシリーズでサポートされていないデバイス
+    [InlineData(MitsubishiPLCSeries.FX3U_ENET, "R")]   // FXシリーズでサポートされていないデバイス
+    public void FX_Series_Should_Not_Support_Advanced_Devices(MitsubishiPLCSeries series, string deviceType)
+    {
+        // Arrange
+        var protocol = new MitsubishiMCProtocol(series);
+
+        // Act & Assert
+        protocol.IsDeviceSupported(deviceType).Should().BeFalse($"{deviceType} should NOT be supported in {series}");
+    }
+
+    [Theory]
+    [InlineData("ZZR")] // 不明なデバイス
+    [InlineData("UNKNOWN")] // 不明なデバイス
+    [InlineData("XX")] // 不明なデバイス
+    public void Should_Throw_NotSupportedException_For_Unsupported_Devices(string deviceType)
+    {
+        // Arrange
+        var protocol = new MitsubishiMCProtocol(MitsubishiPLCSeries.FX3U_ENET); // 基本機能のみのシリーズ
+        var address = new PLCAddress(deviceType, 0, 1);
+
+        // Act & Assert
+        var readAction = () => protocol.ReadAsync(address);
+        var writeAction = () => protocol.WriteAsync(address, new byte[] { 0x00, 0x00 });
+
+        readAction.Should().ThrowAsync<NotSupportedException>()
+            .WithMessage($"*{deviceType}*サポートされていません*");
+
+        writeAction.Should().ThrowAsync<NotSupportedException>()
+            .WithMessage($"*{deviceType}*サポートされていません*");
+    }
+
+    [Fact]
+    public void Should_Validate_Device_Access_Parameters()
+    {
+        // Arrange
+        var protocol = new MitsubishiMCProtocol();
+
+        // Act & Assert - 無効なアドレス
+        var invalidAddressAction = () => protocol.ReadAsync(new PLCAddress("D", -1, 1));
+        invalidAddressAction.Should().ThrowAsync<ArgumentException>()
+            .WithMessage("*アドレスは0以上*");
+
+        // Act & Assert - 無効なサイズ
+        var invalidSizeAction = () => protocol.ReadAsync(new PLCAddress("D", 0, 0));
+        invalidSizeAction.Should().ThrowAsync<ArgumentException>()
+            .WithMessage("*サイズは1以上*");
+
+        // Act & Assert - 空のデバイスタイプ
+        var emptyDeviceAction = () => protocol.ReadAsync(new PLCAddress("", 0, 1));
+        emptyDeviceAction.Should().ThrowAsync<ArgumentException>()
+            .WithMessage("*デバイスタイプが指定されていません*");
+    }
+
+    [Fact]
+    public void Simulator_Should_Return_Error_For_Unsupported_Device_Codes()
+    {
+        // Arrange
+        using var simulator = new MitsubishiMCSimulator(MitsubishiPLCSeries.FX3U_ENET);
+
+        // Act & Assert - 基本シリーズでサポートされていないデバイスコードをチェック
+        simulator.IsDeviceCodeSupported(0xB1).Should().BeFalse(); // ZZR (未サポート)
+        simulator.IsDeviceCodeSupported(0xB0).Should().BeFalse(); // ZR (未サポート)
+        simulator.IsDeviceCodeSupported(0xAF).Should().BeFalse(); // R (未サポート)
+
+        // サポートされているデバイスコードをチェック
+        simulator.IsDeviceCodeSupported(0xA8).Should().BeTrue(); // D (サポート)
+        simulator.IsDeviceCodeSupported(0x9C).Should().BeTrue(); // X (サポート)
+        simulator.IsDeviceCodeSupported(0x90).Should().BeTrue(); // M (サポート)
+    }
+
+    [Fact]
+    public void Should_Get_Supported_Device_List()
+    {
+        // Arrange
+        var protocol = new MitsubishiMCProtocol(MitsubishiPLCSeries.QJ71E71_Binary_Station1);
+        var simulator = new MitsubishiMCSimulator(MitsubishiPLCSeries.QJ71E71_Binary_Station1);
+
+        // Act
+        var protocolDevices = protocol.GetSupportedDevices();
+        var simulatorDevices = simulator.GetSupportedDevices();
+
+        // Assert
+        protocolDevices.Should().NotBeEmpty();
+        simulatorDevices.Should().NotBeEmpty();
+        
+        // Q/L/iQ-Rシリーズは全デバイスをサポート
+        protocolDevices.Should().ContainKeys("X", "Y", "M", "SM", "L", "F", "C", "B", "SB", 
+                                           "S", "TS", "TC", "SS", "SC", "CS", "CC",
+                                           "TN", "SN", "CN", "D", "SD", "W", "SW", 
+                                           "Z", "R", "ZR", "ZZR");
+
+        // プロトコルとシミュレータで同じデバイス情報を返すことを確認
+        protocolDevices.Should().BeEquivalentTo(simulatorDevices);
+    }
+
+    [Fact]
+    public void Should_Get_Series_Description()
+    {
+        // Arrange
+        var simulator = new MitsubishiMCSimulator(MitsubishiPLCSeries.QJ71E71_Binary_Station1);
+
+        // Act
+        var description = simulator.GetSeriesDescription();
+
+        // Assert
+        description.Should().NotBeNullOrEmpty();
+        description.Should().Contain("Q/L/iQ-R");
+    }
+}

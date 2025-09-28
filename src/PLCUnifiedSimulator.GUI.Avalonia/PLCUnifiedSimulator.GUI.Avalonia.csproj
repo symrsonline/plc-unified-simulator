@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.0.10" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.10" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.10" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.10" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <!-- Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration. -->
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PLCUnifiedSimulator.Core\PLCUnifiedSimulator.Core.csproj" />
+    <ProjectReference Include="..\PLCUnifiedSimulator.Protocols.Mitsubishi\PLCUnifiedSimulator.Protocols.Mitsubishi.csproj" />
+    <ProjectReference Include="..\PLCUnifiedSimulator.Protocols.Omron\PLCUnifiedSimulator.Protocols.Omron.csproj" />
+    <ProjectReference Include="..\PLCUnifiedSimulator.Simulators\PLCUnifiedSimulator.Simulators.csproj" />
+  </ItemGroup>
+
+</Project>

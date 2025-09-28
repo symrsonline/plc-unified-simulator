@@ -1,0 +1,74 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="PLCUnifiedSimulator.GUI.Avalonia.Views.MainWindow"
+        Title="{Binding Title}"
+        Width="800" Height="600">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="10">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+            <TextBlock Text="PLC Unified Simulator" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <TextBlock Text="{Binding StatusMessage}" FontSize="14" HorizontalAlignment="Center" Foreground="{DynamicResource SystemAccentColor}"/>
+        </StackPanel>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,300">
+            <!-- Control Panel -->
+            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="2" Margin="0,0,0,10">
+                    <StackPanel Margin="5">
+                        <TextBlock Text="Connection Settings" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <StackPanel Margin="5">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                <TextBlock Text="Protocol:" Width="80" VerticalAlignment="Center"/>
+                                <ComboBox ItemsSource="{Binding Protocols}" SelectedItem="{Binding SelectedProtocol}" Width="150"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                <TextBlock Text="IP Address:" Width="80" VerticalAlignment="Center"/>
+                                <TextBox Text="{Binding IPAddress}" Width="150"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                <TextBlock Text="Port:" Width="80" VerticalAlignment="Center"/>
+                                <TextBox Text="{Binding Port}" Width="150"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="2" Margin="0,0,0,10">
+                    <StackPanel Margin="5">
+                        <TextBlock Text="Controls" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <StackPanel Margin="5" Orientation="Horizontal">
+                            <Button Content="Start Simulator" Command="{Binding StartSimulatorCommand}"
+                                    IsEnabled="{Binding !IsRunning}" Margin="0,0,5,0" Padding="10,5"/>
+                            <Button Content="Stop Simulator" Command="{Binding StopSimulatorCommand}"
+                                    IsEnabled="{Binding IsRunning}" Margin="0,0,5,0" Padding="10,5"/>
+                            <Button Content="Clear Log" Command="{Binding ClearLogCommand}" Padding="10,5"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Log Panel -->
+            <Border Grid.Column="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="2">
+                <StackPanel Margin="5">
+                    <TextBlock Text="Activity Log" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <ListBox ItemsSource="{Binding LogMessages}" Margin="5">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Footer -->
+        <TextBlock Grid.Row="2" Text="PLC Unified Simulator - Cross-platform PLC simulation tool"
+                   HorizontalAlignment="Center" Margin="0,10,0,0" Opacity="0.7"/>
+    </Grid>
+</Window>

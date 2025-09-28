@@ -12,3 +12,11 @@ obj/
 packages/
 publish/
 .idea/
+
+# DocFX generated files
+_site/
+api/
+*.yml
+*.yaml
+docfx.json
+filterConfig.yml

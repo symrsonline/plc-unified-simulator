@@ -5,6 +5,7 @@
 [![codecov](https://codecov.io/gh/symrsonline/plc-unified-simulator/branch/master/graph/badge.svg)](https://codecov.io/gh/symrsonline/plc-unified-simulator)
 [![Docker](https://img.shields.io/docker/v/symrsonline/plc-unified-simulator?label=Docker&logo=docker)](https://github.com/symrsonline/plc-unified-simulator/pkgs/container/plc-unified-simulator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![API Docs](https://img.shields.io/badge/API%20Docs-GitHub%20Pages-blue)](https://symrsonline.github.io/plc-unified-simulator/)
 
 C#で開発されたPLCシミュレータ。三菱Q・iQシリーズ（MCプロトコル）とオムロンFINS（FINSプロトコル）に対応した統合シミュレーション環境を提供します。
 

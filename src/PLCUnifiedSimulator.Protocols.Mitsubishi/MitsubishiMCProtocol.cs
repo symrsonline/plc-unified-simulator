@@ -5,16 +5,24 @@ using PLCUnifiedSimulator.Core;
 namespace PLCUnifiedSimulator.Protocols.Mitsubishi;
 
 /// <summary>
-/// 三菱MCプロトコル（QシリーズおよびiQシリーズ）の実装
+/// 三菱MCプロトコル（全シリーズ対応）の実装
 /// </summary>
 public class MitsubishiMCProtocol : PLCProtocolBase
 {
     private TcpClient? _tcpClient;
     private NetworkStream? _stream;
     private readonly object _lockObject = new();
+    private MitsubishiPLCSeriesInfo _seriesInfo;
 
-    public override string ProtocolName => "Mitsubishi MC Protocol";
-    public override int DefaultPort => 5007;
+    public MitsubishiPLCSeries PLCSeries { get; }
+    public override string ProtocolName => $"Mitsubishi MC Protocol ({_seriesInfo.Description})";
+    public override int DefaultPort => _seriesInfo.DefaultPort;
+
+    public MitsubishiMCProtocol(MitsubishiPLCSeries series = MitsubishiPLCSeries.QJ71E71_Binary_Station1)
+    {
+        PLCSeries = series;
+        _seriesInfo = MitsubishiPLCSeriesInfo.GetSeriesInfo(series);
+    }
 
     public override async Task<bool> ConnectAsync(string ipAddress, int port, CancellationToken cancellationToken = default)
     {
@@ -97,15 +105,27 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
     private byte[] CreateReadRequest(PLCAddress address)
     {
-        // MCプロトコル バッチ読み出し要求フレーム
+        if (_seriesInfo.IsBinaryProtocol)
+        {
+            return CreateBinaryReadRequest(address);
+        }
+        else
+        {
+            return CreateASCIIReadRequest(address);
+        }
+    }
+
+    private byte[] CreateBinaryReadRequest(PLCAddress address)
+    {
+        // MCプロトコル バイナリ バッチ読み出し要求フレーム
         var frame = new List<byte>();
         
         // フレームヘッダ
         frame.AddRange(Encoding.ASCII.GetBytes("5000")); // サブヘッダ
-        frame.Add(0x00); // 要求先ネットワーク番号
-        frame.Add(0xFF); // 要求先局番号
-        frame.AddRange(BitConverter.GetBytes((ushort)0x03FF)); // 要求先ユニットI/O番号
-        frame.Add(0x00); // 要求先マルチドロップ局番号
+        frame.Add(_seriesInfo.NetworkNumber); // 要求先ネットワーク番号
+        frame.Add(_seriesInfo.StationNumber); // 要求先局番号
+        frame.AddRange(BitConverter.GetBytes(_seriesInfo.ModuleIONumber)); // 要求先ユニットI/O番号
+        frame.Add(_seriesInfo.MultiDropStationNumber); // 要求先マルチドロップ局番号
         frame.AddRange(BitConverter.GetBytes((ushort)18)); // 要求データ長
 
         // コマンド
@@ -124,17 +144,52 @@ public class MitsubishiMCProtocol : PLCProtocolBase
         return frame.ToArray();
     }
 
+    private byte[] CreateASCIIReadRequest(PLCAddress address)
+    {
+        // MCプロトコル ASCII バッチ読み出し要求フレーム
+        var deviceInfo = GetDeviceInfo(address.DeviceType);
+        
+        var command = $"0401" + // コマンド
+                     $"0000" + // サブコマンド
+                     $"{address.Address:D6}" + // デバイス番号（6桁）
+                     $"{address.DeviceType}" + // デバイスコード
+                     $"{address.Size:D4}"; // 点数（4桁）
+
+        var frame = new List<byte>();
+        frame.AddRange(Encoding.ASCII.GetBytes("5000")); // サブヘッダ
+        frame.AddRange(Encoding.ASCII.GetBytes($"{_seriesInfo.NetworkNumber:X2}")); // ネットワーク番号
+        frame.AddRange(Encoding.ASCII.GetBytes($"{_seriesInfo.StationNumber:X2}")); // 局番号
+        frame.AddRange(Encoding.ASCII.GetBytes($"{_seriesInfo.ModuleIONumber:X4}")); // モジュールI/O番号
+        frame.AddRange(Encoding.ASCII.GetBytes($"{_seriesInfo.MultiDropStationNumber:X2}")); // マルチドロップ局番号
+        frame.AddRange(Encoding.ASCII.GetBytes($"{command.Length:X4}")); // データ長
+        frame.AddRange(Encoding.ASCII.GetBytes(command)); // コマンドデータ
+
+        return frame.ToArray();
+    }
+
     private byte[] CreateWriteRequest(PLCAddress address, byte[] data)
     {
-        // MCプロトコル バッチ書き込み要求フレーム
+        if (_seriesInfo.IsBinaryProtocol)
+        {
+            return CreateBinaryWriteRequest(address, data);
+        }
+        else
+        {
+            return CreateASCIIWriteRequest(address, data);
+        }
+    }
+
+    private byte[] CreateBinaryWriteRequest(PLCAddress address, byte[] data)
+    {
+        // MCプロトコル バイナリ バッチ書き込み要求フレーム
         var frame = new List<byte>();
         
         // フレームヘッダ
         frame.AddRange(Encoding.ASCII.GetBytes("5000")); // サブヘッダ
-        frame.Add(0x00); // 要求先ネットワーク番号
-        frame.Add(0xFF); // 要求先局番号
-        frame.AddRange(BitConverter.GetBytes((ushort)0x03FF)); // 要求先ユニットI/O番号
-        frame.Add(0x00); // 要求先マルチドロップ局番号
+        frame.Add(_seriesInfo.NetworkNumber); // 要求先ネットワーク番号
+        frame.Add(_seriesInfo.StationNumber); // 要求先局番号
+        frame.AddRange(BitConverter.GetBytes(_seriesInfo.ModuleIONumber)); // 要求先ユニットI/O番号
+        frame.Add(_seriesInfo.MultiDropStationNumber); // 要求先マルチドロップ局番号
         frame.AddRange(BitConverter.GetBytes((ushort)(18 + data.Length))); // 要求データ長
 
         // コマンド
@@ -152,6 +207,31 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
         // データ
         frame.AddRange(data);
+
+        return frame.ToArray();
+    }
+
+    private byte[] CreateASCIIWriteRequest(PLCAddress address, byte[] data)
+    {
+        // MCプロトコル ASCII バッチ書き込み要求フレーム
+        var deviceInfo = GetDeviceInfo(address.DeviceType);
+        
+        var dataHex = Convert.ToHexString(data);
+        var command = $"1401" + // コマンド
+                     $"0000" + // サブコマンド
+                     $"{address.Address:D6}" + // デバイス番号（6桁）
+                     $"{address.DeviceType}" + // デバイスコード
+                     $"{address.Size:D4}" + // 点数（4桁）
+                     dataHex; // データ（16進ASCII）
+
+        var frame = new List<byte>();
+        frame.AddRange(Encoding.ASCII.GetBytes("5000")); // サブヘッダ
+        frame.AddRange(Encoding.ASCII.GetBytes($"{_seriesInfo.NetworkNumber:X2}")); // ネットワーク番号
+        frame.AddRange(Encoding.ASCII.GetBytes($"{_seriesInfo.StationNumber:X2}")); // 局番号
+        frame.AddRange(Encoding.ASCII.GetBytes($"{_seriesInfo.ModuleIONumber:X4}")); // モジュールI/O番号
+        frame.AddRange(Encoding.ASCII.GetBytes($"{_seriesInfo.MultiDropStationNumber:X2}")); // マルチドロップ局番号
+        frame.AddRange(Encoding.ASCII.GetBytes($"{command.Length:X4}")); // データ長
+        frame.AddRange(Encoding.ASCII.GetBytes(command)); // コマンドデータ
 
         return frame.ToArray();
     }
@@ -175,20 +255,41 @@ public class MitsubishiMCProtocol : PLCProtocolBase
 
     private (byte Code, string Name) GetDeviceInfo(string deviceType)
     {
-        return deviceType.ToUpper() switch
+        var upperDeviceType = deviceType.ToUpper();
+        
+        if (_seriesInfo.SupportedDevices.ContainsKey(upperDeviceType))
         {
-            "D" => (0x90, "データレジスタ"),
+            var device = _seriesInfo.SupportedDevices[upperDeviceType];
+            return (device.Code, upperDeviceType);
+        }
+        
+        // フォールバック
+        return upperDeviceType switch
+        {
+            "D" => (0xA8, "データレジスタ"),
             "X" => (0x9C, "入力リレー"),
             "Y" => (0x9D, "出力リレー"),
             "M" => (0x90, "内部リレー"),
-            "B" => (0xA0, "リンクリレー"),
-            "F" => (0x93, "ラッチリレー"),
-            "V" => (0x94, "エッジリレー"),
-            "S" => (0x98, "ステップリレー"),
-            "W" => (0xB4, "リンクレジスタ"),
-            "R" => (0xAF, "ファイルレジスタ"),
-            "Z" => (0xCC, "インデックスレジスタ"),
             _ => (0x90, "不明")
         };
+    }
+
+    /// <summary>
+    /// 指定されたデバイスタイプがワードデバイスかどうかを判定
+    /// </summary>
+    public bool IsWordDevice(string deviceType)
+    {
+        var upperDeviceType = deviceType.ToUpper();
+        return _seriesInfo.SupportedDevices.ContainsKey(upperDeviceType) 
+            ? _seriesInfo.SupportedDevices[upperDeviceType].IsWordDevice 
+            : false;
+    }
+
+    /// <summary>
+    /// サポートされているデバイスのリストを取得
+    /// </summary>
+    public IReadOnlyDictionary<string, (byte Code, bool IsWordDevice)> GetSupportedDevices()
+    {
+        return _seriesInfo.SupportedDevices;
     }
 }

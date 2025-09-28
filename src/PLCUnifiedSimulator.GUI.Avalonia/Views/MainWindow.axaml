@@ -5,61 +5,159 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         x:Class="PLCUnifiedSimulator.GUI.Avalonia.Views.MainWindow"
         Title="{Binding Title}"
-        Width="800" Height="600">
+        MinWidth="600" MinHeight="500"
+        Width="900" Height="700"
+        Background="#F0F0F3"
+        WindowStartupLocation="CenterScreen"
+        CanResize="True">
 
-    <Grid RowDefinitions="Auto,*,Auto" Margin="10">
+    <!-- Neumorphism Styles -->
+    <Window.Styles>
+        <Style Selector="Border.neumorphism">
+            <Setter Property="Background" Value="#F0F0F3"/>
+            <Setter Property="CornerRadius" Value="15"/>
+            <Setter Property="BoxShadow" Value="5 5 10 #D1D1D4, -5 -5 10 #FFFFFF"/>
+            <Setter Property="Margin" Value="10"/>
+        </Style>
+
+        <Style Selector="Border.neumorphism-inset">
+            <Setter Property="Background" Value="#F0F0F3"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="BoxShadow" Value="inset 3 3 6 #D1D1D4, inset -3 -3 6 #FFFFFF"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <Style Selector="Button.neumorphism">
+            <Setter Property="Background" Value="#F0F0F3"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#4A4A4A"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            BoxShadow="5 5 10 #D1D1D4, -5 -5 10 #FFFFFF">
+                        <ContentPresenter Name="PART_ContentPresenter"
+                                        Content="{TemplateBinding Content}"
+                                        Margin="{TemplateBinding Padding}"
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <Style Selector="TextBox.neumorphism">
+            <Setter Property="Background" Value="#F0F0F3"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="0,2"/>
+        </Style>
+
+        <Style Selector="ComboBox.neumorphism">
+            <Setter Property="Background" Value="#F0F0F3"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="0,2"/>
+        </Style>
+
+        <Style Selector="ListBox.neumorphism">
+            <Setter Property="Background" Value="#F0F0F3"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+
+        <!-- Responsive Text Styles -->
+        <Style Selector="TextBlock.title">
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Foreground" Value="#4A4A4A"/>
+        </Style>
+
+        <Style Selector="TextBlock.section">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="Foreground" Value="#4A4A4A"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="20" Background="#F0F0F3">
         <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock Text="PLC Unified Simulator" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-            <TextBlock Text="{Binding StatusMessage}" FontSize="14" HorizontalAlignment="Center" Foreground="{DynamicResource SystemAccentColor}"/>
-        </StackPanel>
+        <Border Classes="neumorphism" Grid.Row="0" Margin="0,0,0,20">
+            <StackPanel Margin="20">
+                <TextBlock x:Name="TitleText" Classes="title" Text="PLC Unified Simulator"/>
+                <TextBlock Text="{Binding StatusMessage}" FontSize="16" HorizontalAlignment="Center"
+                          Foreground="#6A6A6A" FontWeight="Medium"/>
+            </StackPanel>
+        </Border>
 
         <!-- Main Content -->
-        <Grid Grid.Row="1" ColumnDefinitions="*,300">
+        <Grid x:Name="MainContentGrid" Grid.Row="1" ColumnDefinitions="*,320">
             <!-- Control Panel -->
-            <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="2" Margin="0,0,0,10">
-                    <StackPanel Margin="5">
-                        <TextBlock Text="Connection Settings" FontWeight="Bold" Margin="0,0,0,5"/>
-                        <StackPanel Margin="5">
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                <TextBlock Text="Protocol:" Width="80" VerticalAlignment="Center"/>
-                                <ComboBox ItemsSource="{Binding Protocols}" SelectedItem="{Binding SelectedProtocol}" Width="150"/>
+            <ScrollViewer Grid.Column="0" Margin="0,0,20,0">
+                <StackPanel x:Name="ControlPanel">
+                <!-- Connection Settings -->
+                <Border Classes="neumorphism">
+                    <StackPanel Margin="20">
+                        <TextBlock x:Name="ConnectionTitle" Classes="section" Text="Connection Settings"/>
+                        <StackPanel Margin="10">
+                            <StackPanel Margin="0,0,0,15">
+                                <TextBlock Text="Protocol:" FontWeight="Medium" Margin="0,0,0,5" Foreground="#6A6A6A"/>
+                                <ComboBox Classes="neumorphism" ItemsSource="{Binding Protocols}"
+                                         SelectedItem="{Binding SelectedProtocol}" Height="35"/>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                <TextBlock Text="IP Address:" Width="80" VerticalAlignment="Center"/>
-                                <TextBox Text="{Binding IPAddress}" Width="150"/>
+                            <StackPanel Margin="0,0,0,15">
+                                <TextBlock Text="IP Address:" FontWeight="Medium" Margin="0,0,0,5" Foreground="#6A6A6A"/>
+                                <TextBox Classes="neumorphism" Text="{Binding HostAddress}" Height="35"/>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                <TextBlock Text="Port:" Width="80" VerticalAlignment="Center"/>
-                                <TextBox Text="{Binding Port}" Width="150"/>
+                            <StackPanel Margin="0,0,0,15">
+                                <TextBlock Text="Port:" FontWeight="Medium" Margin="0,0,0,5" Foreground="#6A6A6A"/>
+                                <TextBox Classes="neumorphism" Text="{Binding Port}" Height="35"/>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </Border>
 
-                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="2" Margin="0,0,0,10">
-                    <StackPanel Margin="5">
-                        <TextBlock Text="Controls" FontWeight="Bold" Margin="0,0,0,5"/>
-                        <StackPanel Margin="5" Orientation="Horizontal">
-                            <Button Content="Start Simulator" Command="{Binding StartSimulatorCommand}"
-                                    IsEnabled="{Binding !IsRunning}" Margin="0,0,5,0" Padding="10,5"/>
-                            <Button Content="Stop Simulator" Command="{Binding StopSimulatorCommand}"
-                                    IsEnabled="{Binding IsRunning}" Margin="0,0,5,0" Padding="10,5"/>
-                            <Button Content="Clear Log" Command="{Binding ClearLogCommand}" Padding="10,5"/>
-                        </StackPanel>
+                <!-- Controls -->
+                <Border Classes="neumorphism" Margin="0,20,0,0">
+                    <StackPanel Margin="20">
+                        <TextBlock x:Name="ControlsTitle" Classes="section" Text="Controls"/>
+                        <WrapPanel Margin="10" HorizontalAlignment="Center" Orientation="Horizontal">
+                            <Button Classes="neumorphism" Content="Start Simulator"
+                                    Command="{Binding StartSimulatorCommand}"
+                                    IsEnabled="{Binding !IsRunning}" MinWidth="120"/>
+                            <Button Classes="neumorphism" Content="Stop Simulator"
+                                    Command="{Binding StopSimulatorCommand}"
+                                    IsEnabled="{Binding IsRunning}" MinWidth="120"/>
+                            <Button Classes="neumorphism" Content="Clear Log"
+                                    Command="{Binding ClearLogCommand}" MinWidth="100"/>
+                        </WrapPanel>
                     </StackPanel>
                 </Border>
             </StackPanel>
+            </ScrollViewer>
 
             <!-- Log Panel -->
-            <Border Grid.Column="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="2">
-                <StackPanel Margin="5">
-                    <TextBlock Text="Activity Log" FontWeight="Bold" Margin="0,0,0,5"/>
-                    <ListBox ItemsSource="{Binding LogMessages}" Margin="5">
+            <Border x:Name="LogPanel" Grid.Column="1" Classes="neumorphism">
+                <StackPanel Margin="20">
+                    <TextBlock x:Name="LogTitle" Classes="section" Text="Activity Log"/>
+                    <ListBox x:Name="LogListBox" Classes="neumorphism-inset" ItemsSource="{Binding LogMessages}"
+                            Margin="10" MinHeight="200">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="5"
+                                          Foreground="#4A4A4A"/>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
@@ -68,7 +166,10 @@
         </Grid>
 
         <!-- Footer -->
-        <TextBlock Grid.Row="2" Text="PLC Unified Simulator - Cross-platform PLC simulation tool"
-                   HorizontalAlignment="Center" Margin="0,10,0,0" Opacity="0.7"/>
+        <Border Classes="neumorphism" Grid.Row="2" Margin="0,20,0,0">
+            <TextBlock Text="PLC Unified Simulator - Cross-platform PLC simulation tool"
+                      HorizontalAlignment="Center" Margin="20" Opacity="0.8"
+                      Foreground="#6A6A6A" FontWeight="Medium"/>
+        </Border>
     </Grid>
 </Window>

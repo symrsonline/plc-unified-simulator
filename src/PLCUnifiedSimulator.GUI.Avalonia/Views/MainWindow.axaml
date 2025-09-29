@@ -317,7 +317,7 @@
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                 <StackPanel Orientation="Horizontal" Margin="16,0" Name="TabPanel">
                     <!-- Dashboard -->
-                    <Border Classes="nav-item selected" Name="DashboardNav">
+                    <Border Classes="nav-item selected" Name="DashboardNav" PointerPressed="Tab_PointerPressed">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="📊" FontSize="18" VerticalAlignment="Center"/>
                             <TextBlock Text="ダッシュボード" Classes="label-large" VerticalAlignment="Center"/>
@@ -325,7 +325,7 @@
                     </Border>
 
                     <!-- Simulators -->
-                    <Border Classes="nav-item" Name="SimulatorsNav">
+                    <Border Classes="nav-item" Name="SimulatorsNav" PointerPressed="Tab_PointerPressed">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="⚙️" FontSize="18" VerticalAlignment="Center"/>
                             <TextBlock Text="シミュレータ" Classes="label-large" VerticalAlignment="Center"/>
@@ -333,7 +333,7 @@
                     </Border>
 
                     <!-- Test Data -->
-                    <Border Classes="nav-item" Name="TestDataNav">
+                    <Border Classes="nav-item" Name="TestDataNav" PointerPressed="Tab_PointerPressed">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="📝" FontSize="18" VerticalAlignment="Center"/>
                             <TextBlock Text="テストデータ" Classes="label-large" VerticalAlignment="Center"/>
@@ -341,7 +341,7 @@
                     </Border>
 
                     <!-- Settings -->
-                    <Border Classes="nav-item" Name="SettingsNav">
+                    <Border Classes="nav-item" Name="SettingsNav" PointerPressed="Tab_PointerPressed">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="🔧" FontSize="18" VerticalAlignment="Center"/>
                             <TextBlock Text="設定" Classes="label-large" VerticalAlignment="Center"/>
@@ -349,7 +349,7 @@
                     </Border>
 
                     <!-- Logs -->
-                    <Border Classes="nav-item" Name="LogsNav">
+                    <Border Classes="nav-item" Name="LogsNav" PointerPressed="Tab_PointerPressed">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="📋" FontSize="18" VerticalAlignment="Center"/>
                             <TextBlock Text="ログ" Classes="label-large" VerticalAlignment="Center"/>
@@ -363,7 +363,10 @@
         <Grid Grid.Row="2" Name="MainGrid">
             <!-- Content Area -->
             <ScrollViewer Background="{DynamicResource SurfaceBrush}" Name="ContentArea">
-                <StackPanel Margin="{Binding Bounds.Width, ElementName=ContentArea, Converter={StaticResource ResponsiveMarginConverter}}">
+                <TabControl SelectedIndex="{Binding SelectedTabIndex}" Margin="{Binding Bounds.Width, ElementName=ContentArea, Converter={StaticResource ResponsiveMarginConverter}}">
+                    <!-- Dashboard Tab -->
+                    <TabItem Header="📊 ダッシュボード" IsVisible="False">
+                        <StackPanel>
                     <!-- Dashboard Cards - Responsive Layout -->
                     <ItemsControl Margin="0,0,0,24">
                         <ItemsControl.ItemsPanel>
@@ -385,23 +388,23 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Available Protocols Card -->
-                            <Border Classes="card">
-                                <StackPanel>
-                                    <TextBlock Text="対応プロトコル" Classes="title-medium" Margin="0,0,0,16"/>
-                                    <TextBlock Text="{Binding AvailablePlcSeries.Count}" Classes="display-medium" 
-                                              Foreground="{DynamicResource SecondaryBrush}"/>
-                                    <TextBlock Text="プロトコル対応" Classes="body-medium" 
-                                              Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
-                                </StackPanel>
-                            </Border>
-
                             <!-- System Status Card -->
                             <Border Classes="card">
                                 <StackPanel>
                                     <TextBlock Text="システム状態" Classes="title-medium" Margin="0,0,0,16"/>
                                     <TextBlock Text="✅" Classes="display-medium"/>
-                                    <TextBlock Text="正常動作中" Classes="body-medium" 
+                                    <TextBlock Text="{Binding SystemStatus}" Classes="body-medium" 
+                                              Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Total Connections Card -->
+                            <Border Classes="card">
+                                <StackPanel>
+                                    <TextBlock Text="総接続数" Classes="title-medium" Margin="0,0,0,16"/>
+                                    <TextBlock Text="{Binding TotalConnections}" Classes="display-medium" 
+                                              Foreground="{DynamicResource TertiaryBrush}"/>
+                                    <TextBlock Text="接続中" Classes="body-medium" 
                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
                                 </StackPanel>
                             </Border>
@@ -488,7 +491,7 @@
                         <StackPanel>
                             <TextBlock Text="利用可能なシミュレータ" Classes="title-large" Margin="0,0,0,20"/>
                             
-                            <ItemsControl ItemsSource="{Binding AvailablePlcSeries}">
+                            <ItemsControl ItemsSource="{Binding AvailableSeries}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <UniformGrid Columns="{Binding Bounds.Width, ElementName=ContentArea, Converter={StaticResource ResponsiveUniformGridConverter}}" 
@@ -524,9 +527,21 @@
                     <!-- Device Values Monitoring -->
                     <Border Classes="card">
                         <StackPanel>
-                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,20">
+                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,20">
                                 <TextBlock Grid.Column="0" Text="デバイス値モニタリング" Classes="title-large"/>
-                                <Button Grid.Column="1" Classes="outlined" Content="更新" 
+                                
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <CheckBox IsChecked="{Binding IsAutoRefreshEnabled}" 
+                                             Content="自動更新" 
+                                             Command="{Binding ToggleAutoRefreshCommand}"/>
+                                    <TextBlock Text="間隔:" Classes="body-medium" VerticalAlignment="Center"/>
+                                    <TextBox Text="{Binding AutoRefreshInterval}" 
+                                            Width="60" 
+                                            Classes="modern"
+                                            Watermark="ms"/>
+                                </StackPanel>
+                                
+                                <Button Grid.Column="2" Classes="outlined" Content="更新" 
                                        Command="{Binding RefreshDeviceValuesCommand}"/>
                             </Grid>
                             
@@ -540,7 +555,148 @@
                             </DataGrid>
                         </StackPanel>
                     </Border>
+
+                    <!-- Recent Logs Preview -->
+                    <Border Classes="card">
+                        <StackPanel>
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,20">
+                                <TextBlock Grid.Column="0" Text="最近のログ" Classes="title-large"/>
+                                <Button Grid.Column="1" Classes="outlined" Content="全て表示" 
+                                       Command="{Binding NavigateToTabCommand}" CommandParameter="Logs"/>
+                            </Grid>
+                            
+                            <ListBox ItemsSource="{Binding RecentLogMessages}" Classes="modern" MaxHeight="200">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Classes="body-medium"
+                                                  TextWrapping="Wrap" Margin="8,4"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
+
+                    </TabItem>
+
+                    <!-- Logs Tab -->
+                    <TabItem Header="📋 ログ" IsVisible="False">
+                        <StackPanel>
+                    <!-- Logs Header -->
+                    <Border Classes="card" Margin="0,0,0,24">
+                        <StackPanel>
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,20">
+                                <TextBlock Grid.Column="0" Text="ログ" Classes="title-large"/>
+                                
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="フィルタ:" Classes="body-medium" VerticalAlignment="Center"/>
+                                    <TextBox Text="{Binding LogFilterText}" 
+                                            Width="150" 
+                                            Classes="modern"
+                                            Watermark="キーワードで検索"/>
+                                </StackPanel>
+                                
+                                <Button Grid.Column="2" Classes="outlined" Content="クリア" 
+                                       Command="{Binding ClearLogsCommand}" Margin="0,0,8,0"/>
+                                
+                                <Button Grid.Column="3" Classes="outlined" Content="エクスポート" 
+                                       Command="{Binding ExportLogsCommand}"/>
+                            </Grid>
+                            
+                            <!-- Log Statistics -->
+                            <Grid ColumnDefinitions="*,*,*,*" Margin="0,0,0,20">
+                                <Border Background="{DynamicResource SurfaceContainerHighBrush}" 
+                                       CornerRadius="8" Padding="16" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding LogMessages.Count}" Classes="title-large" 
+                                                  Foreground="{DynamicResource PrimaryBrush}"/>
+                                        <TextBlock Text="総ログ数" Classes="body-medium" 
+                                                  Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <Border Background="{DynamicResource SurfaceContainerHighBrush}" 
+                                       CornerRadius="8" Padding="16" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding ErrorLogCount}" Classes="title-large" 
+                                                  Foreground="{DynamicResource ErrorBrush}"/>
+                                        <TextBlock Text="エラー" Classes="body-medium" 
+                                                  Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <Border Background="{DynamicResource SurfaceContainerHighBrush}" 
+                                       CornerRadius="8" Padding="16" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding WarningLogCount}" Classes="title-large" 
+                                                  Foreground="{DynamicResource WarningBrush}"/>
+                                        <TextBlock Text="警告" Classes="body-medium" 
+                                                  Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <Border Background="{DynamicResource SurfaceContainerHighBrush}" 
+                                       CornerRadius="8" Padding="16">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding InfoLogCount}" Classes="title-large" 
+                                                  Foreground="{DynamicResource InfoBrush}"/>
+                                        <TextBlock Text="情報" Classes="body-medium" 
+                                                  Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Logs List -->
+                    <Border Classes="card">
+                        <StackPanel>
+                            <TextBlock Text="ログメッセージ" Classes="title-large" Margin="0,0,0,20"/>
+                            
+                            <ListBox ItemsSource="{Binding FilteredLogMessages}" Classes="modern" 
+                                    MaxHeight="600" SelectionMode="Multiple">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Classes="card" Margin="0,4">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <!-- Log Level Indicator -->
+                                                <Border Grid.Column="0" Width="4" Height="40" 
+                                                       CornerRadius="2" Margin="0,0,16,0"
+                                                       Background="{Binding LogLevel, Converter={StaticResource LogLevelToColorConverter}}"/>
+                                                
+                                                <!-- Log Content -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Timestamp, StringFormat='yyyy/MM/dd HH:mm:ss'}" 
+                                                              Classes="body-medium" 
+                                                              Foreground="{DynamicResource OnSurfaceVariantBrush}"/>
+                                                    <TextBlock Text="{Binding Message}" Classes="body-large" 
+                                                              TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                                
+                                                <!-- Log Level Badge -->
+                                                <Border Grid.Column="2" Background="{Binding LogLevel, Converter={StaticResource LogLevelToColorConverter}}" 
+                                                       CornerRadius="12" Padding="8,4" Margin="16,0,0,0">
+                                                    <TextBlock Text="{Binding LogLevel}" Classes="label-large" 
+                                                              Foreground="{Binding LogLevel, Converter={StaticResource LogLevelToForegroundConverter}}"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            
+                            <TextBlock IsVisible="{Binding !FilteredLogMessages.Count}"
+                                      Text="ログメッセージはありません"
+                                      Classes="body-medium"
+                                      Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                      HorizontalAlignment="Center"
+                                      Margin="0,40"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                    </TabItem>
+                </TabControl>
             </ScrollViewer>
         </Grid>
     </Grid>

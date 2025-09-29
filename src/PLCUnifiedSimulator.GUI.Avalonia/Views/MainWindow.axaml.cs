@@ -70,4 +70,43 @@ public partial class MainWindow : Window
             ? WindowState.Normal 
             : WindowState.Maximized;
     }
+    
+    private void Tab_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is Border border && border.Name != null)
+        {
+            string tabName = border.Name.Replace("Nav", "");
+            
+            // ViewModelのSelectedTabを更新
+            if (this.DataContext is ViewModels.MainWindowViewModel viewModel)
+            {
+                viewModel.NavigateToTabCommand.Execute(tabName);
+            }
+            
+            // タブの選択状態を更新
+            UpdateTabSelection(border.Name);
+        }
+    }
+    
+    private void UpdateTabSelection(string selectedTabName)
+    {
+        // すべてのタブからselectedクラスを削除
+        var tabs = new[] { "DashboardNav", "SimulatorsNav", "TestDataNav", "SettingsNav", "LogsNav" };
+        
+        foreach (var tabName in tabs)
+        {
+            var tab = this.FindControl<Border>(tabName);
+            if (tab != null)
+            {
+                tab.Classes.Remove("selected");
+            }
+        }
+        
+        // 選択されたタブにselectedクラスを追加
+        var selectedTab = this.FindControl<Border>(selectedTabName);
+        if (selectedTab != null)
+        {
+            selectedTab.Classes.Add("selected");
+        }
+    }
 }

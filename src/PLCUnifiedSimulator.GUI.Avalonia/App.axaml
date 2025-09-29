@@ -64,6 +64,8 @@
     <converters:ResponsiveNavVisibilityConverter x:Key="ResponsiveNavVisibilityConverter"/>
     <converters:ResponsiveMarginConverter x:Key="ResponsiveMarginConverter"/>
     <converters:ResponsiveUniformGridConverter x:Key="ResponsiveUniformGridConverter"/>
+    <converters:LogLevelToColorConverter x:Key="LogLevelToColorConverter"/>
+    <converters:LogLevelToForegroundConverter x:Key="LogLevelToForegroundConverter"/>
   </Application.Resources>
 
   <Application.DataTemplates>

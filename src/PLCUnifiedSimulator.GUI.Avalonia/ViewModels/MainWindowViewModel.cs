@@ -15,8 +15,18 @@ using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using System.Threading;
+using System.Timers;
+using System.IO;
 
 namespace PLCUnifiedSimulator.GUI.Avalonia.ViewModels;
+
+public class LogEntry
+{
+    public DateTime Timestamp { get; set; } = DateTime.Now;
+    public string Message { get; set; } = string.Empty;
+    public string LogLevel { get; set; } = "Info";
+}
 
 public class PLCSeriesInfo
 {
@@ -77,6 +87,10 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<string> logMessages = new();
 
+    // ログメッセージ（詳細なログエントリ）
+    [ObservableProperty]
+    private ObservableCollection<LogEntry> logEntries = new();
+
     // 利用可能なPLCシリーズ
     [ObservableProperty]
     private ObservableCollection<PLCSeriesInfo> availableSeries = new();
@@ -115,15 +129,89 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private int udpPort = 5100;
 
+    // ダッシュボード統計情報
+    [ObservableProperty]
+    private string systemStatus = "準備完了";
+
+    [ObservableProperty]
+    private int totalConnections = 0;
+
+    [ObservableProperty]
+    private int communicationErrors = 0;
+
+    [ObservableProperty]
+    private bool isAutoRefreshEnabled = true;
+
+    [ObservableProperty]
+    private int autoRefreshInterval = 2000; // ミリ秒
+
+    // ログプレビュー（最新5件）
+    [ObservableProperty]
+    private ObservableCollection<string> recentLogMessages = new();
+
+    // ナビゲーション
+    [ObservableProperty]
+    private string selectedTab = "Dashboard";
+
+    [ObservableProperty]
+    private int selectedTabIndex = 0;
+
+    // ログタブで使用するプロパティ
+    [ObservableProperty]
+    private string logFilterText = string.Empty;
+
+    [ObservableProperty]
+    private ObservableCollection<LogEntry> filteredLogMessages = new();
+
+    // ログ統計
+    [ObservableProperty]
+    private int errorLogCount = 0;
+
+    [ObservableProperty]
+    private int warningLogCount = 0;
+
+    [ObservableProperty]
+    private int infoLogCount = 0;
+
     private readonly Dictionary<MitsubishiPLCSeries, MitsubishiMCSimulator> _runningMitsubishiSimulators = new();
     private OmronFINSSimulator? _runningOmronSimulator;
     // private readonly ILogger? _logger;
     // private readonly IServiceProvider? _serviceProvider;
 
+    private System.Timers.Timer? _autoRefreshTimer;
+
     public MainWindowViewModel()
     {
         LogMessages.Add("Application started");
         LoadAvailableSeries();
+        UpdateSystemStatus();
+        StartAutoRefresh();
+
+        // ログメッセージの変更を監視してプレビューとフィルタリングを更新
+        LogMessages.CollectionChanged += (sender, e) => 
+        {
+            UpdateRecentLogs();
+            UpdateLogEntries();
+            UpdateFilteredLogs();
+            UpdateLogStatistics();
+        };
+        UpdateRecentLogs();
+        UpdateLogEntries();
+        UpdateFilteredLogs();
+        UpdateLogStatistics();
+
+        // ログフィルタの変更を監視
+        PropertyChanged += (sender, e) => 
+        {
+            if (e.PropertyName == nameof(LogFilterText))
+            {
+                UpdateFilteredLogs();
+            }
+            if (e.PropertyName == nameof(SelectedTab))
+            {
+                UpdateSelectedTabIndex();
+            }
+        };
     }
 
     private void LoadAvailableSeries()
@@ -156,6 +244,108 @@ public partial class MainWindowViewModel : ViewModelBase
             Series = null,
             IsOmron = true
         });
+    }
+
+    private void UpdateSystemStatus()
+    {
+        if (RunningSimulators.Count > 0)
+        {
+            SystemStatus = $"正常動作中 ({RunningSimulators.Count}台実行中)";
+        }
+        else
+        {
+            SystemStatus = "準備完了";
+        }
+
+        // 総接続数を更新（簡易的に実行中シミュレータ数を接続数とする）
+        TotalConnections = RunningSimulators.Count;
+    }
+
+    private void StartAutoRefresh()
+    {
+        if (_autoRefreshTimer != null)
+        {
+            _autoRefreshTimer.Stop();
+            _autoRefreshTimer.Dispose();
+        }
+
+        _autoRefreshTimer = new System.Timers.Timer(AutoRefreshInterval);
+        _autoRefreshTimer.Elapsed += async (sender, e) => 
+        {
+            if (IsAutoRefreshEnabled && SelectedRunningSimulator != null)
+            {
+                await RefreshDeviceValues();
+            }
+        };
+        _autoRefreshTimer.Start();
+    }
+
+    private void StopAutoRefresh()
+    {
+        if (_autoRefreshTimer != null)
+        {
+            _autoRefreshTimer.Stop();
+            _autoRefreshTimer.Dispose();
+            _autoRefreshTimer = null;
+        }
+    }
+
+    private void UpdateRecentLogs()
+    {
+        RecentLogMessages.Clear();
+        var recentLogs = LogMessages.TakeLast(5).ToList();
+        foreach (var log in recentLogs)
+        {
+            RecentLogMessages.Add(log);
+        }
+    }
+
+    private void UpdateLogEntries()
+    {
+        LogEntries.Clear();
+        foreach (var message in LogMessages)
+        {
+            var logEntry = new LogEntry
+            {
+                Timestamp = DateTime.Now,
+                Message = message,
+                LogLevel = DetermineLogLevel(message)
+            };
+            LogEntries.Add(logEntry);
+        }
+    }
+
+    private void UpdateFilteredLogs()
+    {
+        FilteredLogMessages.Clear();
+        var filtered = string.IsNullOrWhiteSpace(LogFilterText) 
+            ? LogEntries 
+            : LogEntries.Where(entry => 
+                entry.Message.Contains(LogFilterText, StringComparison.OrdinalIgnoreCase) ||
+                entry.LogLevel.Contains(LogFilterText, StringComparison.OrdinalIgnoreCase));
+        
+        foreach (var entry in filtered)
+        {
+            FilteredLogMessages.Add(entry);
+        }
+    }
+
+    private void UpdateLogStatistics()
+    {
+        ErrorLogCount = LogEntries.Count(entry => entry.LogLevel == "Error");
+        WarningLogCount = LogEntries.Count(entry => entry.LogLevel == "Warning");
+        InfoLogCount = LogEntries.Count(entry => entry.LogLevel == "Info");
+    }
+
+    private string DetermineLogLevel(string message)
+    {
+        if (message.Contains("Error") || message.Contains("✗") || message.Contains("Failed"))
+            return "Error";
+        if (message.Contains("Warning") || message.Contains("⚠"))
+            return "Warning";
+        if (message.Contains("✓") || message.Contains("Success") || message.Contains("started") || message.Contains("stopped"))
+            return "Info";
+        return "Info";
     }
 
     [RelayCommand]
@@ -444,6 +634,9 @@ public partial class MainWindowViewModel : ViewModelBase
             
             // デフォルトテストデータを設定
             await SetDefaultTestDataForMitsubishi(simulator, series);
+
+            // システム状態を更新
+            UpdateSystemStatus();
         }
         catch (Exception ex)
         {
@@ -501,6 +694,9 @@ public partial class MainWindowViewModel : ViewModelBase
             
             // デフォルトテストデータを設定
             await SetDefaultTestDataForOmron(simulator);
+
+            // システム状態を更新
+            UpdateSystemStatus();
         }
         catch (Exception ex)
         {
@@ -526,6 +722,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 }
                 
                 LogMessages.Add($"✓ {series} simulator stopped");
+
+                // システム状態を更新
+                UpdateSystemStatus();
             }
             catch (Exception ex)
             {
@@ -552,6 +751,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 }
                 
                 LogMessages.Add("✓ Omron FINS simulator stopped");
+
+                // システム状態を更新
+                UpdateSystemStatus();
             }
             catch (Exception ex)
             {
@@ -692,6 +894,23 @@ public partial class MainWindowViewModel : ViewModelBase
                     });
                 }
             }
+
+            // 入力リレーの値表示
+            for (int i = 0; i < 8; i++)
+            {
+                var address = new PLCAddress("X", i, 1);
+                var data = simulator.GetDeviceValue(address);
+                if (data != null && data.Length >= 1)
+                {
+                    var value = data[0] != 0 ? "ON" : "OFF";
+                    DeviceValues.Add(new DeviceValueInfo
+                    {
+                        DeviceAddress = $"X{i}",
+                        Value = value,
+                        DataType = "Bit"
+                    });
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -735,6 +954,23 @@ public partial class MainWindowViewModel : ViewModelBase
                     DeviceValues.Add(new DeviceValueInfo
                     {
                         DeviceAddress = $"WR{100 + i}",
+                        Value = value,
+                        DataType = "Bit"
+                    });
+                }
+            }
+
+            // 入力リレーの値表示
+            for (int i = 0; i < 8; i++)
+            {
+                var address = new PLCAddress("X", i, 1);
+                var data = _runningOmronSimulator.GetDeviceValue(address);
+                if (data != null && data.Length >= 1)
+                {
+                    var value = data[0] != 0 ? "ON" : "OFF";
+                    DeviceValues.Add(new DeviceValueInfo
+                    {
+                        DeviceAddress = $"X{i}",
                         Value = value,
                         DataType = "Bit"
                     });
@@ -788,9 +1024,84 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void CloseWindow()
     {
+        StopAutoRefresh();
+        
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.Shutdown();
         }
+    }
+
+    [RelayCommand]
+    private void ToggleAutoRefresh()
+    {
+        if (IsAutoRefreshEnabled)
+        {
+            StartAutoRefresh();
+        }
+        else
+        {
+            StopAutoRefresh();
+        }
+    }
+
+    [RelayCommand]
+    private void UpdateAutoRefreshInterval(int interval)
+    {
+        AutoRefreshInterval = interval;
+        if (IsAutoRefreshEnabled)
+        {
+            StartAutoRefresh(); // インターバルを変更して再開
+        }
+    }
+
+    [RelayCommand]
+    private void NavigateToTab(string tabName)
+    {
+        SelectedTab = tabName;
+    }
+
+    [RelayCommand]
+    private async Task ExportLogs()
+    {
+        try
+        {
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var fileName = $"PLC_Simulator_Logs_{timestamp}.txt";
+            
+            // デスクトップに保存
+            var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            var filePath = Path.Combine(desktopPath, fileName);
+            
+            using (var writer = new StreamWriter(filePath))
+            {
+                await writer.WriteLineAsync($"PLC Unified Simulator Log Export - {DateTime.Now:yyyy/MM/dd HH:mm:ss}");
+                await writer.WriteLineAsync(new string('=', 80));
+                await writer.WriteLineAsync();
+                
+                foreach (var entry in FilteredLogMessages)
+                {
+                    await writer.WriteLineAsync($"[{entry.Timestamp:yyyy/MM/dd HH:mm:ss}] [{entry.LogLevel}] {entry.Message}");
+                }
+            }
+            
+            StatusMessage = $"ログをエクスポートしました: {fileName}";
+            LogMessages.Add($"✓ Logs exported to {fileName}");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"ログエクスポートエラー: {ex.Message}";
+            LogMessages.Add($"✗ Failed to export logs: {ex.Message}");
+        }
+    }
+
+    private void UpdateSelectedTabIndex()
+    {
+        SelectedTabIndex = SelectedTab switch
+        {
+            "Dashboard" => 0,
+            "Logs" => 1,
+            _ => 0
+        };
     }
 }

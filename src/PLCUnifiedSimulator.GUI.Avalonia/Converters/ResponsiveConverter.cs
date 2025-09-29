@@ -2,6 +2,7 @@ using Avalonia.Data;
 using Avalonia.Data.Converters;
 using System;
 using System.Globalization;
+using Avalonia.Media;
 
 namespace PLCUnifiedSimulator.GUI.Avalonia.Converters;
 
@@ -170,6 +171,58 @@ public class ResponsiveUniformGridConverter : IValueConverter
             return 1;
         }
         return 2;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// ログレベルに応じて色を変換するコンバーター
+/// </summary>
+public class LogLevelToColorConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is string logLevel)
+        {
+            return logLevel switch
+            {
+                "Error" => new SolidColorBrush(Color.Parse("#DC362E")), // Error color
+                "Warning" => new SolidColorBrush(Color.Parse("#FF8F00")), // Warning color
+                "Info" => new SolidColorBrush(Color.Parse("#1976D2")), // Info color
+                _ => new SolidColorBrush(Color.Parse("#1976D2")) // Default to info
+            };
+        }
+        return new SolidColorBrush(Color.Parse("#1976D2"));
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// ログレベルに応じて前景色を変換するコンバーター
+/// </summary>
+public class LogLevelToForegroundConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is string logLevel)
+        {
+            return logLevel switch
+            {
+                "Error" => new SolidColorBrush(Color.Parse("#FFFFFF")), // White text on error background
+                "Warning" => new SolidColorBrush(Color.Parse("#000000")), // Black text on warning background
+                "Info" => new SolidColorBrush(Color.Parse("#FFFFFF")), // White text on info background
+                _ => new SolidColorBrush(Color.Parse("#FFFFFF")) // Default to white
+            };
+        }
+        return new SolidColorBrush(Color.Parse("#FFFFFF"));
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

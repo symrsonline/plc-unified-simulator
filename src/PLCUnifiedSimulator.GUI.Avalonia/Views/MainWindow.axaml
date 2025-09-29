@@ -149,18 +149,23 @@
 
         <!-- Navigation Item -->
         <Style Selector="Border.nav-item">
-            <Setter Property="CornerRadius" Value="16"/>
-            <Setter Property="Margin" Value="12,4"/>
-            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="CornerRadius" Value="12,12,0,0"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+            <Setter Property="Padding" Value="20,12"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariantBrush}"/>
+            <Setter Property="BorderThickness" Value="1,1,1,0"/>
         </Style>
 
         <Style Selector="Border.nav-item:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SecondaryContainerBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}"/>
         </Style>
 
         <Style Selector="Border.nav-item.selected">
-            <Setter Property="Background" Value="{DynamicResource PrimaryContainerBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="BorderThickness" Value="1,1,1,0"/>
         </Style>
 
         <!-- Input Fields -->
@@ -273,12 +278,12 @@
     </Window.Styles>
 
     <!-- Custom Title Bar -->
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*">
         <Border Grid.Row="0" Background="{DynamicResource SurfaceContainerBrush}" Height="48">
             <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="8,0,0,0">
                 <!-- Mobile Menu Button -->
                 <Button Grid.Column="0" Classes="menu-button" Content="☰" FontSize="18" 
-                       IsVisible="{Binding !IsVisible, ElementName=NavRail}" Name="MobileMenuButton"/>
+                       IsVisible="{Binding !IsVisible, ElementName=TabBar}" Name="MobileMenuButton"/>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
                     <TextBlock Text="🏭" FontSize="20" VerticalAlignment="Center" Margin="0,0,12,0"/>
@@ -304,61 +309,60 @@
             </Grid>
         </Border>
 
-        <!-- Main Content with Navigation -->
-        <Grid Grid.Row="1" Name="MainGrid">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="{Binding Bounds.Width, ElementName=MainGrid, Converter={StaticResource ResponsiveNavRailConverter}}"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            
-            <!-- Navigation Rail -->
-            <Border Grid.Column="0" Classes="nav-rail" Name="NavRail"
-                    IsVisible="{Binding Bounds.Width, ElementName=MainGrid, Converter={StaticResource ResponsiveNavVisibilityConverter}}">
-                <StackPanel Margin="8,16">
+        <!-- Tab Bar -->
+        <Border Grid.Row="1" Background="{DynamicResource SurfaceContainerBrush}" 
+                BorderBrush="{DynamicResource OutlineVariantBrush}" BorderThickness="0,0,0,1"
+                IsVisible="{Binding Bounds.Width, ElementName=MainGrid, Converter={StaticResource ResponsiveNavVisibilityConverter}}"
+                Name="TabBar">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Horizontal" Margin="16,0" Name="TabPanel">
                     <!-- Dashboard -->
                     <Border Classes="nav-item selected" Name="DashboardNav">
-                        <StackPanel>
-                            <TextBlock Text="📊" FontSize="24" HorizontalAlignment="Center"/>
-                            <TextBlock Text="ダッシュボード" Classes="label-large" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="📊" FontSize="18" VerticalAlignment="Center"/>
+                            <TextBlock Text="ダッシュボード" Classes="label-large" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Simulators -->
                     <Border Classes="nav-item" Name="SimulatorsNav">
-                        <StackPanel>
-                            <TextBlock Text="⚙️" FontSize="24" HorizontalAlignment="Center"/>
-                            <TextBlock Text="シミュレータ" Classes="label-large" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="⚙️" FontSize="18" VerticalAlignment="Center"/>
+                            <TextBlock Text="シミュレータ" Classes="label-large" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Test Data -->
                     <Border Classes="nav-item" Name="TestDataNav">
-                        <StackPanel>
-                            <TextBlock Text="📝" FontSize="24" HorizontalAlignment="Center"/>
-                            <TextBlock Text="テストデータ" Classes="label-large" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="📝" FontSize="18" VerticalAlignment="Center"/>
+                            <TextBlock Text="テストデータ" Classes="label-large" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Settings -->
                     <Border Classes="nav-item" Name="SettingsNav">
-                        <StackPanel>
-                            <TextBlock Text="⚙️" FontSize="24" HorizontalAlignment="Center"/>
-                            <TextBlock Text="設定" Classes="label-large" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="🔧" FontSize="18" VerticalAlignment="Center"/>
+                            <TextBlock Text="設定" Classes="label-large" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Logs -->
                     <Border Classes="nav-item" Name="LogsNav">
-                        <StackPanel>
-                            <TextBlock Text="📋" FontSize="24" HorizontalAlignment="Center"/>
-                            <TextBlock Text="ログ" Classes="label-large" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="📋" FontSize="18" VerticalAlignment="Center"/>
+                            <TextBlock Text="ログ" Classes="label-large" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
-            </Border>
+            </ScrollViewer>
+        </Border>
 
+        <!-- Main Content -->
+        <Grid Grid.Row="2" Name="MainGrid">
             <!-- Content Area -->
-            <ScrollViewer Grid.Column="1" Background="{DynamicResource SurfaceBrush}" Name="ContentArea">
+            <ScrollViewer Background="{DynamicResource SurfaceBrush}" Name="ContentArea">
                 <StackPanel Margin="{Binding Bounds.Width, ElementName=ContentArea, Converter={StaticResource ResponsiveMarginConverter}}">
                     <!-- Dashboard Cards - Responsive Layout -->
                     <ItemsControl Margin="0,0,0,24">

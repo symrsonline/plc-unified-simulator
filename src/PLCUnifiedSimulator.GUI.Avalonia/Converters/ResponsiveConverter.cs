@@ -100,10 +100,10 @@ public class ResponsiveNavRailConverter : IValueConverter
     {
         if (value is double width)
         {
-            // 小画面では非表示、中画面以上ではアイコンぎりぎり見える幅（56px）
-            return width >= 768 ? 56.0 : 0.0;
+            // 小画面では非表示、中画面以上では表示
+            return width >= 768 ? 80.0 : 0.0;
         }
-        return 56.0;
+        return 80.0;
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

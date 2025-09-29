@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "PLCUnifiedSimulator.GUI.Avalonia": {
+      "commandName": "Project",
+      "commandLineArgs": "",
+      "workingDirectory": "$(ProjectDir)",
+      "stopAtEntry": false
+    }
+  }
+}
